@@ -211,6 +211,20 @@ ul{list-style:none}
 .draw{stroke-dasharray:1200;stroke-dashoffset:1200;animation:draw 1.1s var(--ease) forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 
+.odo{padding:18px 20px 16px;width:100%;text-align:left;display:block;background:var(--surface)}
+.big-unit{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--muted);margin-left:6px;letter-spacing:0}
+.odo__cap{font-size:13px;color:var(--ink-2);margin-top:4px}
+.rail{position:relative;height:24px;margin:16px 6px 4px}
+.rail::before{content:"";position:absolute;left:0;right:0;top:10px;height:4px;border-radius:999px;background:var(--surface-2)}
+.rail__fill{position:absolute;left:0;right:0;top:10px;height:4px;border-radius:999px;background:var(--change-ink);opacity:.55;transform-origin:left;animation:grow .9s var(--ease) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.rail .pt{position:absolute;top:6px;width:12px;height:12px;border-radius:50%;transform:translateX(-50%);background:var(--surface);border:2px solid var(--change-ink)}
+.rail .pt--end{background:var(--change-ink)}
+.rail .pt--tu{width:8px;height:8px;top:8px;border:2px solid var(--surface);background:var(--topup-ink);box-sizing:content-box}
+.rail-labels{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted);line-height:1.35}
+.rail-labels b{display:block;color:var(--ink);font-size:13.5px;font-weight:600}
+.odohint{font-size:12.5px;color:var(--muted);padding:0 6px}
+.odohint.warn{color:var(--change-ink)}
 .note-line{font-size:12.5px;color:var(--muted);margin-top:10px;padding:0 4px}
 .prod{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;margin-top:8px}
 .prod .l{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
@@ -441,7 +455,6 @@ const CATEGORIES = {
 const calc = {
   oilToLitres(q, unit){ q = Number(q)||0; return unit === 'mL' ? q/1000 : q; },
   fuelEffective(r){ return r.litres > 0 ? r.amount / r.litres : null; },
-  oilEffective(r){ return r.litres > 0 && r.amount > 0 ? r.amount / r.litres : null; },
   sortDesc(a,b){ return a.dateTime < b.dateTime ? 1 : a.dateTime > b.dateTime ? -1 : ((b.createdAt||'') > (a.createdAt||'') ? 1 : -1); },
   inMonth(list, key){ return list.filter(r => r.dateTime.slice(0,7) === key); },
   inRange(list, from, to){ return list.filter(r => { const d = r.dateTime.slice(0,10); return (!from || d >= from) && (!to || d <= to); }); },
@@ -452,16 +465,52 @@ const calc = {
   },
   oilSummary(list){
     const topups = list.filter(r=>r.type==='topup'), changes = list.filter(r=>r.type==='change');
-    const spend = calc.sum(list, r=>r.amount);
     const lt = l => Math.round(l.reduce((a,r)=>a+(Number(r.litres)||0),0)*10000)/10000;
-    return { count:list.length, topups:topups.length, changes:changes.length, spend,
-      topupLitres:lt(topups), changeLitres:lt(changes), totalLitres:lt(list),
-      avgCost: list.length ? spend/list.length : null };
+    return { count:list.length, topups:topups.length, changes:changes.length,
+      topupLitres:lt(topups), changeLitres:lt(changes), totalLitres:lt(list) };
   },
   month(state, key){
-    const f = calc.fuelSummary(calc.inMonth(state.fuel, key));
-    const o = calc.oilSummary(calc.inMonth(state.oil, key));
-    return { fuel:f, oil:o, combined: r2(f.spend + o.spend) };
+    return { fuel: calc.fuelSummary(calc.inMonth(state.fuel, key)), oil: calc.oilSummary(calc.inMonth(state.oil, key)) };
+  },
+  /* odometer: engine oil records carry the bike's ODO reading (km) */
+  hasOdo(r){ return r && r.odometerKm != null && isFinite(r.odometerKm); },
+  oilAsc(oil){ return oil.slice().sort((a,b) => a.dateTime < b.dateTime ? -1 : a.dateTime > b.dateTime ? 1 : ((a.odometerKm||0) - (b.odometerKm||0))); },
+  dist(from, to){ if(!calc.hasOdo(from) || !calc.hasOdo(to)) return null; const d = to.odometerKm - from.odometerKm; return d >= 0 ? d : null; },
+  /* km context for one oil record: how far that oil ran, or how far after its oil change */
+  oilKm(oil, rec){
+    const asc = calc.oilAsc(oil); const i = asc.findIndex(r => r.id === rec.id); if(i < 0) return {};
+    if(rec.type === 'change'){
+      const next = asc.slice(i+1).find(r => r.type === 'change');
+      if(next) return { kind:'lasted', km:calc.dist(rec, next), until:next };
+      const later = asc.slice(i+1).filter(calc.hasOdo); const last = later[later.length-1];
+      return { kind:'running', km: last ? calc.dist(rec, last) : 0, asOf: last || rec };
+    }
+    const prev = asc.slice(0, i).reverse().find(r => r.type === 'change');
+    return prev ? { kind:'since', km:calc.dist(prev, rec), change:prev } : { kind:'none' };
+  },
+  /* the oil currently in the engine: last oil change → latest ODO reading */
+  currentOil(oil){
+    const asc = calc.oilAsc(oil); const changes = asc.filter(r => r.type === 'change');
+    const change = changes[changes.length-1]; if(!change) return null;
+    const after = asc.slice(asc.indexOf(change));
+    const reading = after.filter(calc.hasOdo).pop() || change;
+    const topups = after.filter(r => r.type === 'topup');
+    const prevChange = changes[changes.length-2];
+    return { change, reading, km: calc.dist(change, reading), topups: topups.length,
+      topupLitres: Math.round(topups.reduce((a,r)=>a+(Number(r.litres)||0),0)*10000)/10000,
+      lastLasted: prevChange ? calc.dist(prevChange, change) : null, prevChange };
+  },
+  avgOilLife(oil){
+    const ch = calc.oilAsc(oil).filter(r => r.type === 'change'); const d = [];
+    for(let i = 1; i < ch.length; i++){ const k = calc.dist(ch[i-1], ch[i]); if(k != null) d.push(k); }
+    return d.length ? Math.round(d.reduce((a,b)=>a+b,0)/d.length) : null;
+  },
+  /* neighbouring ODO readings for a date, to sanity-check a new entry */
+  odoBounds(oil, date, excludeId){
+    const asc = calc.oilAsc(oil.filter(r => r.id !== excludeId && calc.hasOdo(r)));
+    const before = asc.filter(r => r.dateTime.slice(0,10) <= date).pop() || null;
+    const after = asc.find(r => r.dateTime.slice(0,10) > date) || null;
+    return { before, after };
   },
   timeline(state, filter){
     const rows = [];
@@ -485,13 +534,13 @@ function exampleRecords(){
     fuel.push({ id:`fuel_ex${i}`, dateTime:at(ago,t[0],t[1]), litres:L, amount:amt, basePrice:base, notes:'', createdAt:stamp, updatedAt:stamp, sample:true });
   }
   fuel.push({ id:'fuel_exlast', dateTime:at(1,18,25), litres:8.5, amount:1020, basePrice:120, notes:'Full tank before the Sreemangal ride', createdAt:stamp, updatedAt:stamp, sample:true });
-  const o = (id, ago, h, m, type, q, unit, amount, brand, grade, odo, notes) => oil.push({ id, type, dateTime:at(ago,h,m), quantity:q, unit, litres:calc.oilToLitres(q,unit), amount, brand, grade, odometerKm:odo, notes, createdAt:stamp, updatedAt:stamp, sample:true });
-  o('oil_ex1',118,10,30,'change',1.0,'L',750,'Motul','10W-40',16240,'Changed at Bhai Bhai Motors, Zindabazar');
-  o('oil_ex2',84,19,10,'topup',200,'mL',180,'Motul','10W-40',null,'');
-  o('oil_ex3',57,9,0,'topup',250,'mL',225,'Motul','10W-40',null,'');
-  o('oil_ex4',25,11,15,'change',1.0,'L',780,'ELF','10W-40',19105,'');
-  o('oil_ex5',25,11,40,'topup',100,'mL',90,'ELF','10W-40',null,'Topped up the same day after the change');
-  o('oil_ex6',3,8,20,'topup',200,'mL',180,'ELF','10W-40',null,'');
+  const o = (id, ago, h, m, type, q, unit, brand, grade, odo, notes) => oil.push({ id, type, dateTime:at(ago,h,m), quantity:q, unit, litres:calc.oilToLitres(q,unit), brand, grade, odometerKm:odo, notes, createdAt:stamp, updatedAt:stamp, sample:true });
+  o('oil_ex1',118,10,30,'change',1.0,'L','Motul','10W-40',16240,'Changed at Bhai Bhai Motors, Zindabazar');
+  o('oil_ex2',84,19,10,'topup',200,'mL','Motul','10W-40',17180,'');
+  o('oil_ex3',57,9,0,'topup',250,'mL','Motul','10W-40',18050,'');
+  o('oil_ex4',25,11,15,'change',1.0,'L','ELF','10W-40',19105,'');
+  o('oil_ex5',25,11,40,'topup',100,'mL','ELF','10W-40',19105,'Topped up the same day after the change');
+  o('oil_ex6',3,8,20,'topup',200,'mL','ELF','10W-40',20925,'');
   return { fuel, oil };
 }
 
@@ -594,17 +643,22 @@ applyTheme(prefs.theme || 'system');
 /* ───────── record presentation ───────── */
 function describe(r){
   if(r.kind === 'fuel') return { title:'Refueled', sub:`${litres(r.litres)} · ${tk(r.amount)}`, tile:'fuel', icon:'fuel', label:'Refueling' };
-  if(r.type === 'change') return { title:'Engine oil changed', sub:`${oilQty(r)} · ${tk(r.amount)}`, tile:'change', icon:'change', label:'Oil change' };
-  return { title:'Engine oil topped up', sub:`${oilQty(r)} · ${tk(r.amount)}`, tile:'topup', icon:'drop', label:'Oil top-up' };
+  const odo = calc.hasOdo(r) ? ` · ${km(r.odometerKm)}` : '';
+  if(r.type === 'change') return { title:'Engine oil changed', sub:`${oilQty(r)}${odo}`, tile:'change', icon:'change', label:'Oil change' };
+  return { title:'Engine oil topped up', sub:`${oilQty(r)}${odo}`, tile:'topup', icon:'drop', label:'Oil top-up' };
 }
 function rowHTML(r, opts={}){
   const d = describe(r); let sub = d.sub;
-  if(opts.meta && r.kind === 'oil'){ const bits = [r.brand, r.grade].filter(Boolean).join(' '); if(bits) sub += ` · ${esc(bits)}`; if(r.odometerKm) sub += ` · ${km(r.odometerKm)}`; }
+  if(opts.meta && r.kind === 'oil'){ const k = calc.oilKm(Store.oil, r);
+    if(k.km != null && k.kind === 'lasted') sub += ` · lasted ${km(k.km)}`;
+    else if(k.km != null && k.kind === 'running') sub += ` · ${km(k.km)} so far`;
+    else if(k.km != null && k.kind === 'since') sub += ` · ${km(k.km)} after change`;
+    const bits = [r.brand, r.grade].filter(Boolean).join(' '); if(bits) sub += ` · ${esc(bits)}`; }
   if(opts.meta && r.kind === 'fuel') sub += ` · ${tkL(calc.fuelEffective(r))}`;
-  return `<li><button class="row" data-open="${r.kind}:${esc(r.id)}" aria-label="${esc(d.title)}, ${esc(fmtLong(r.dateTime))} ${fmtTime(r.dateTime)}">
+  return `<li><button class="row" data-open="${r.kind}:${esc(r.id)}" aria-label="${esc(d.title)}, ${esc(fmtLong(r.dateTime))}${r.kind==='fuel'?' '+fmtTime(r.dateTime):''}">
     <span class="tile tile--${d.tile}">${ic(d.icon)}</span>
     <span class="row__main"><span class="row__title">${d.title}</span><span class="row__sub num">${sub}</span></span>
-    <span class="row__when num"><b>${fmtDay(r.dateTime)}</b>${fmtTime(r.dateTime)}</span></button></li>`;
+    <span class="row__when num"><b>${fmtDay(r.dateTime)}</b>${r.kind === 'fuel' ? fmtTime(r.dateTime) : ''}</span></button></li>`;
 }
 
 /* ───────── chart ───────── */
@@ -637,6 +691,19 @@ function monthsAvailable(){
   const has = new Set(all); const out = []; for(let k = start; k <= cur; k = addMonths(k,1)) out.push({k, has:has.has(k)}); return out;
 }
 
+function odoCard(cur){
+  const a = cur.change.odometerKm, b = cur.reading.odometerKm, span = Math.max(1, b - a);
+  const pos = v => Math.min(100, Math.max(0, ((v - a) / span) * 100));
+  const tops = Store.oil.filter(r => r.type === 'topup' && calc.hasOdo(r) && r.dateTime >= cur.change.dateTime);
+  const same = cur.reading.id === cur.change.id;
+  return `<button class="card odo press" data-open="oil:${esc(cur.change.id)}" aria-label="Current oil: ${cur.km != null ? km(cur.km) : 'unknown'} since the oil change on ${esc(fmtLong(cur.change.dateTime))}">
+    <div class="eyebrow">On current oil</div>
+    <div class="big num">${cur.km != null ? cur.km.toLocaleString('en-US') : '—'}<span class="big-unit">km</span></div>
+    <div class="odo__cap">${same ? 'Log your next top-up with its ODO reading to see distance on this oil.' : cur.km == null ? 'The latest reading is below the oil change reading. Check the ODO values.' : `Distance from the oil change to your latest ODO reading`}</div>
+    <div class="rail" aria-hidden="true"><span class="rail__fill"></span>${tops.map(t => `<i class="pt pt--tu" style="left:${pos(t.odometerKm)}%"></i>`).join('')}<i class="pt" style="left:0"></i><i class="pt pt--end" style="left:${same ? 0 : 100}%"></i></div>
+    <div class="rail-labels num"><span><b>${km(a)}</b>Changed ${fmtDay(cur.change.dateTime)}</span><span style="text-align:right"><b>${km(b)}</b>${same ? 'No later reading' : 'Read ' + fmtDay(cur.reading.dateTime)}</span></div>
+  </button>`;
+}
 function overviewHTML(){
   const m = calc.month(Store, UI.month); const ml = monthLabel(UI.month); const isCur = UI.month === curMonth();
   const tl = calc.timeline(Store, UI.actFilter).slice(0,5);
@@ -644,16 +711,15 @@ function overviewHTML(){
   const lf = fuelSorted[0], lo = oilSorted[0];
   const lastProduct = oilSorted.find(r => r.brand || r.grade);
   const f = m.fuel, o = m.oil;
-  const total = m.combined, fp = total ? f.spend/total : 0;
+  const cur = calc.currentOil(Store.oil);
+  const plural = (n, w) => `${n} ${w}${n===1?'':'s'}`;
 
-  const spend = `<section class="card spend" aria-label="Monthly spending">
-    <div class="eyebrow">Spent in ${ml.name}${ml.y !== new Date().getFullYear() ? ' '+ml.y : ''}</div>
-    <div class="big num" data-count="${total}">${tk(total)}</div>
-    <div class="split" aria-hidden="true">${total ? `<span class="s-fuel" style="flex-grow:${f.spend}"></span><span class="s-oil" style="flex-grow:${o.spend}"></span>` : `<span class="s-none"></span>`}</div>
-    <dl class="legend num">
-      <div><dt><i class="dot dot--fuel"></i>Fuel</dt><dd>${tk(f.spend)}${total?` <small style="color:var(--muted);font-weight:500">· ${Math.round(fp*100)}%</small>`:''}</dd></div>
-      <div><dt><i class="dot dot--oil"></i>Engine oil</dt><dd>${tk(o.spend)}${total?` <small style="color:var(--muted);font-weight:500">· ${100-Math.round(fp*100)}%</small>`:''}</dd></div>
-      <div class="tot"><dt>Combined</dt><dd>${tk(total)}</dd></div>
+  const spend = `<section class="card spend" aria-label="${ml.name} at a glance">
+    <div class="eyebrow">Fuel spent in ${ml.name}${ml.y !== new Date().getFullYear() ? ' '+ml.y : ''}</div>
+    <div class="big num" data-count="${f.spend}">${tk(f.spend)}</div>
+    <dl class="legend num" style="margin-top:14px">
+      <div><dt><i class="dot dot--fuel"></i>Fuel</dt><dd>${plural(f.count,'refueling')} · ${litres(f.litres)}</dd></div>
+      <div><dt><i class="dot dot--oil"></i>Engine oil</dt><dd>${plural(o.topups,'top-up')} · ${plural(o.changes,'change')}</dd></div>
     </dl></section>`;
 
   const activity = `<section class="group" aria-labelledby="h-act">
@@ -687,13 +753,14 @@ function overviewHTML(){
   const oilSec = `<section class="group" aria-labelledby="h-oil">
     <div class="ghead"><span class="tag tag--oil" id="h-oil">${ic('oil')}Engine oil <span class="count">(${o.count})</span></span>
       <button class="circle-btn" style="width:36px;height:36px;box-shadow:none;background:var(--surface-2)" data-add="oil" aria-label="Log engine oil">${ic('plus')}</button></div>
-    ${lo ? `<ul class="stack">${rowHTML(Object.assign({kind:'oil'}, lo), {meta:true})}</ul>` : `<button class="slot" data-add="oil">Log a top-up or an oil change<span class="plus">${ic('plus')}</span></button>`}
+    ${cur ? odoCard(cur) : `<button class="slot" data-add="oil">Log an oil change with its ODO reading to track km on the current oil<span class="plus">${ic('plus')}</span></button>`}
     <div class="tiles num">
-      <div class="stat stat--oil"><div class="v">${tk(o.spend)}</div><div class="l">Oil spend · ${ml.short}</div></div>
-      <div class="stat stat--oil"><div class="v">${o.count}</div><div class="l">Oil records · ${ml.short}</div><div class="h">${o.topups} top-up${o.topups===1?'':'s'} · ${o.changes} change${o.changes===1?'':'s'}</div></div>
-      <div class="stat"><div class="v">${litres(o.topupLitres,1).replace(' L','')}<small>L</small></div><div class="l">Added in top-ups</div></div>
-      <div class="stat stat--change"><div class="v">${litres(o.changeLitres,1).replace(' L','')}<small>L</small></div><div class="l">Used in oil changes</div></div>
+      <div class="stat stat--change"><div class="v">${cur && cur.lastLasted != null ? cur.lastLasted.toLocaleString('en-US') + '<small>km</small>' : '—'}</div><div class="l">Previous oil lasted</div>${cur && cur.lastLasted != null ? `<div class="h">${km(cur.prevChange.odometerKm)} → ${km(cur.change.odometerKm)}</div>` : '<div class="h">Needs two oil changes</div>'}</div>
+      <div class="stat stat--oil"><div class="v">${cur ? cur.topups : '—'}</div><div class="l">Top-ups on this oil</div>${cur ? `<div class="h">${trimL(cur.topupLitres)} added</div>` : ''}</div>
+      <div class="stat"><div class="v">${o.count}</div><div class="l">Oil records · ${ml.short}</div><div class="h">${plural(o.topups,'top-up')} · ${plural(o.changes,'change')}</div></div>
+      <div class="stat"><div class="v">${litres(o.topupLitres,1).replace(' L','')}<small>L</small></div><div class="l">Topped up · ${ml.short}</div></div>
     </div>
+    ${lo ? `<ul class="stack" style="margin-top:8px">${rowHTML(Object.assign({kind:'oil'}, lo), {meta:true})}</ul>` : ''}
     <div class="card prod"><span class="l">Latest product</span><span class="v">${lastProduct ? esc([lastProduct.brand, lastProduct.grade].filter(Boolean).join(' · ')) : '<span style="color:var(--muted);font-weight:500">None recorded yet</span>'}</span></div>
     <p class="note-line">Quantities are what you logged, which may be oil purchased rather than measured engine consumption.</p>
     <div class="linkrow"><button class="ghost" data-goto-history="oil">View engine oil history ${ic('arrow')}</button></div>
@@ -729,9 +796,11 @@ function historyHTML(){
   list = list.map(r => Object.assign({kind:UI.hKind}, r)).sort(calc.sortDesc);
   let summary;
   if(isOil){ const s = calc.oilSummary(list);
-    summary = `<dl class="card summary num"><div class="full"><dt>Oil expense</dt><dd>${tk(s.spend)}</dd><div class="cap">${s.count} record${s.count===1?'':'s'}${s.count?` · avg ${tk(s.avgCost)} per record`:''}</div></div>
+    const odos = list.filter(calc.hasOdo).map(r => r.odometerKm); const lo = odos.length ? Math.min(...odos) : null, hi = odos.length ? Math.max(...odos) : null;
+    const life = calc.avgOilLife(Store.oil);
+    summary = `<dl class="card summary num"><div class="full"><dt>Distance across these records</dt><dd>${odos.length > 1 ? (hi-lo).toLocaleString('en-US') + '<span class="big-unit">km</span>' : '—'}</dd><div class="cap">${odos.length > 1 ? `ODO ${km(lo)} → ${km(hi)}` : 'Needs at least two ODO readings in this range'}</div></div>
       <div><dt>Top-ups</dt><dd>${s.topups}</dd></div><div><dt>Oil changes</dt><dd>${s.changes}</dd></div>
-      <div><dt>Quantity logged</dt><dd>${litres(s.totalLitres,1)}</dd></div><div><dt>Top-ups / changes</dt><dd>${litres(s.topupLitres,1)} <span style="color:var(--muted);font-weight:500">/</span> ${litres(s.changeLitres,1)}</dd></div></dl>`;
+      <div><dt>Quantity logged</dt><dd>${litres(s.totalLitres,1)}</dd></div><div><dt>Avg oil life</dt><dd>${life != null ? km(life) : '—'}</dd></div></dl>`;
   } else { const s = calc.fuelSummary(list);
     summary = `<dl class="card summary num"><div class="full"><dt>Fuel expense</dt><dd>${tk(s.spend)}</dd><div class="cap">${s.count} refueling${s.count===1?'':'s'}</div></div>
       <div><dt>Litres purchased</dt><dd>${litres(s.litres)}</dd></div><div><dt>Avg per refueling</dt><dd>${s.count?litres(s.avgLitres):'—'}</dd></div>
@@ -910,11 +979,13 @@ function openFuelForm(rec){
 
 function openOilForm(rec){
   const n = nowParts(); const isEdit = !!rec;
-  const v = rec ? { type:rec.type, date:rec.dateTime.slice(0,10), time:rec.dateTime.slice(11,16), qty:rec.quantity, unit:rec.unit, amount:rec.amount, brand:rec.brand||'', grade:rec.grade||'', odo:rec.odometerKm!=null?rec.odometerKm:'', notes:rec.notes||'' }
-    : { type:'topup', date:n.date, time:n.time, qty:'', unit:Store.settings.oilUnit||'mL', amount:'', brand:'', grade:'', odo:'', notes:'' };
+  const v = rec ? { type:rec.type, date:rec.dateTime.slice(0,10), qty:rec.quantity, unit:rec.unit, odo:calc.hasOdo(rec)?rec.odometerKm:'', brand:rec.brand||'', grade:rec.grade||'', notes:rec.notes||'' }
+    : { type:'topup', date:n.date, qty:'', unit:Store.settings.oilUnit||'mL', odo:'', brand:'', grade:'', notes:'' };
+  const others = Store.oil.filter(r => !rec || r.id !== rec.id);
+  const lastRead = calc.oilAsc(others).filter(calc.hasOdo).pop();
   const brands = Array.from(new Set([...Store.oil.slice().sort(calc.sortDesc).map(r=>r.brand).filter(Boolean), 'ELF','Motul','Liqui Moly','Castrol','Shell Advance']));
   const grades = Array.from(new Set([...Store.oil.map(r=>r.grade).filter(Boolean), '10W-30','10W-40','10W-50','20W-50']));
-  const hasOptional = !!(v.brand || v.grade || v.odo !== '' || v.notes);
+  const hasOptional = !!(v.brand || v.grade || v.notes);
   const html = `${sheetHead(isEdit?'Edit engine oil':'Log Engine Oil', isEdit?'Save changes':'Save engine oil record')}
     <form class="sheet__body" id="oilForm" novalidate>
       <div class="card namecard"><div><div class="serif" id="oName">Oil top-up</div><div class="sub" id="oSub">Oil added to the engine</div></div><span class="tile tile--lg" id="oTile"></span></div>
@@ -924,20 +995,17 @@ function openOilForm(rec){
       </div>
       <div class="fgroup">
         <div class="frow"><label for="oDate">Date</label><span class="vpill">${ic('cal')}<input type="date" id="oDate" value="${v.date}" max="${n.date}" required></span></div>
-        <div class="frow"><label for="oTime">Time</label><span class="vpill">${ic('clock')}<input type="time" id="oTime" value="${v.time}" required></span></div>
-      </div>
-      <div class="fgroup">
+        <div class="frow"><label for="oOdo">Current ODO</label><span class="vpill">${ic('gauge')}<input class="n num" id="oOdo" inputmode="numeric" placeholder="${lastRead ? lastRead.odometerKm.toLocaleString('en-US') : '0'}" value="${esc(v.odo)}" style="width:84px"><span class="unit">km</span></span></div>
         <div class="frow"><label for="oQty">Quantity added</label><span class="vpill" style="padding-right:3px"><input class="n num" id="oQty" inputmode="decimal" placeholder="0" value="${esc(v.qty)}" style="width:68px"><span class="unitseg" role="group" aria-label="Unit">${['mL','L'].map(u => `<button type="button" data-unit="${u}" aria-pressed="${v.unit===u}">${u}</button>`).join('')}</span></span></div>
-        <div class="frow"><label for="oAmount">Total amount paid</label><span class="vpill"><span class="unit" style="padding:0 0 0 2px">৳</span><input class="n num" id="oAmount" inputmode="decimal" placeholder="0" value="${esc(v.amount)}"></span></div>
       </div>
+      <p class="odohint" id="oHint">${lastRead ? `Last reading ${km(lastRead.odometerKm)} on ${fmtDay(lastRead.dateTime)}` : 'Enter the reading on your bike’s odometer'}</p>
       <p class="ferr" id="oErr" hidden></p>
       <div class="card calc" id="oCalc"></div>
       <div class="fgroup">
-        <button type="button" class="more" id="moreBtn" aria-expanded="${hasOptional}" aria-controls="moreBox"><span>Details <span class="opt">optional · brand, grade, odometer, notes</span></span>${ic('down')}</button>
+        <button type="button" class="more" id="moreBtn" aria-expanded="${hasOptional}" aria-controls="moreBox"><span>Details <span class="opt">optional · brand, grade, notes</span></span>${ic('down')}</button>
         <div id="moreBox" ${hasOptional?'':'hidden'} style="border-top:1px solid var(--line)">
           <div class="frow"><label for="oBrand">Brand / product</label><span class="vpill"><input class="t" id="oBrand" list="brandList" placeholder="e.g. Motul" value="${esc(v.brand)}" autocomplete="off"></span></div>
           <div class="frow"><label for="oGrade">Oil grade</label><span class="vpill"><input class="t" id="oGrade" list="gradeList" placeholder="e.g. 10W-40" value="${esc(v.grade)}" style="width:110px" autocomplete="off"></span></div>
-          <div class="frow"><label for="oOdo">Odometer</label><span class="vpill">${ic('gauge')}<input class="n num" id="oOdo" inputmode="numeric" placeholder="—" value="${esc(v.odo)}" style="width:80px"><span class="unit">km</span></span></div>
           <div style="border-top:1px solid var(--line)"><label class="sr" for="oNotes">Notes</label><textarea class="notes" id="oNotes" placeholder="Notes — workshop, reason, anything useful">${esc(v.notes)}</textarea></div>
         </div>
       </div>
@@ -949,26 +1017,49 @@ function openOilForm(rec){
     const paintType = () => {
       $$('[data-type]', el).forEach(b => b.setAttribute('aria-checked', String(b.dataset.type === type)));
       f('oName').textContent = type === 'change' ? 'Oil change' : 'Oil top-up';
-      f('oSub').textContent = type === 'change' ? 'A maintenance event — enter what was actually used' : 'Oil added to the engine';
+      f('oSub').textContent = type === 'change' ? 'Starts a new oil from this ODO reading' : 'Oil added to the engine';
       f('oTile').className = `tile tile--lg tile--${type}`; f('oTile').innerHTML = ic(type === 'change' ? 'change' : 'drop');
     };
-    const read = () => { const odoRaw = f('oOdo').value.trim(); return { date:f('oDate').value, time:f('oTime').value, qty:parseNum(f('oQty').value), amount:parseNum(f('oAmount').value), brand:f('oBrand').value.trim(), grade:f('oGrade').value.trim().toUpperCase(), odoRaw, odo: odoRaw === '' ? null : parseNum(odoRaw.replace(/[\s_]/g,'')), notes:f('oNotes').value.trim() }; };
+    const parseOdo = raw => { const t = raw.replace(/[,\s_]/g,''); return /^\d+$/.test(t) ? parseInt(t,10) : NaN; };
+    const read = () => { const odoRaw = f('oOdo').value.trim(); return { date:f('oDate').value, qty:parseNum(f('oQty').value), odoRaw, odo: parseOdo(odoRaw), brand:f('oBrand').value.trim(), grade:f('oGrade').value.trim().toUpperCase(), notes:f('oNotes').value.trim() }; };
     const validate = () => {
       const x = read(); const errs = {};
-      if(!x.date) errs.oDate = 'Choose a date.'; if(!x.time) errs.oTime = 'Choose a time.';
+      if(!x.date) errs.oDate = 'Choose a date.';
+      else if(x.date > nowParts().date) errs.oDate = 'The date can’t be in the future.';
+      if(x.odoRaw === '') errs.oOdo = 'Enter the current ODO reading in km.';
+      else if(!(x.odo >= 0)) errs.oOdo = 'ODO should be whole kilometres, like 20925.';
       if(!(x.qty > 0)) errs.oQty = 'Enter the quantity added.';
       else if(unit === 'mL' && x.qty > 5000) errs.oQty = 'That’s over 5 L. Did you mean litres?';
       else if(unit === 'L' && x.qty > 10) errs.oQty = 'That’s over 10 L. Did you mean millilitres?';
-      if(!(x.amount > 0)) errs.oAmount = 'Enter the amount paid in taka.';
-      if(x.odoRaw !== '' && !(x.odo >= 0 && Number.isInteger(x.odo))) errs.oOdo = 'Odometer should be whole kilometres.';
-      if(x.date && x.date > nowParts().date) errs.oDate = 'The date can’t be in the future.';
-      ['oDate','oTime','oQty','oAmount','oOdo'].forEach(id => f(id).closest('.vpill').classList.toggle('bad', !!errs[id] && touched.has(id)));
+      ['oDate','oOdo','oQty'].forEach(id => f(id).closest('.vpill').classList.toggle('bad', !!errs[id] && touched.has(id)));
       const shown = Object.keys(errs).filter(k => touched.has(k)).map(k => errs[k]);
       f('oErr').hidden = !shown.length; f('oErr').textContent = shown[0] || '';
-      const L = x.qty > 0 ? calc.oilToLitres(x.qty, unit) : 0; const eff = L > 0 && x.amount > 0 ? x.amount / L : null;
-      const c = f('oCalc'); c.classList.toggle('calc--empty', eff == null);
-      c.innerHTML = `<div><div class="l">Calculated effective price</div><div class="cap">${eff!=null ? `${tk(x.amount)} ÷ ${trimL(L)}. Not necessarily the bottle’s retail price.` : 'Amount paid ÷ quantity in litres. Not necessarily the bottle’s retail price.'}</div></div><div class="v num">${eff!=null ? tk(eff, eff % 1 ? 2 : 0) + '/L' : '৳—/L'}</div>`;
-      save.disabled = Object.keys(errs).length > 0; return { x, ok:!Object.keys(errs).length, L };
+      // ODO sanity against neighbouring readings (a warning, not a block)
+      const hint = f('oHint'); hint.classList.remove('warn');
+      if(x.date && x.odo >= 0){
+        const bd = calc.odoBounds(Store.oil, x.date, rec && rec.id);
+        if(bd.before && x.odo < bd.before.odometerKm){ hint.classList.add('warn'); hint.textContent = `Lower than ${km(bd.before.odometerKm)} logged on ${fmtDay(bd.before.dateTime)}. Check the reading.`; }
+        else if(bd.after && x.odo > bd.after.odometerKm){ hint.classList.add('warn'); hint.textContent = `Higher than ${km(bd.after.odometerKm)} logged later, on ${fmtDay(bd.after.dateTime)}. Check the reading.`; }
+        else hint.textContent = bd.before ? `${km(x.odo - bd.before.odometerKm)} since the last reading on ${fmtDay(bd.before.dateTime)}` : 'First ODO reading in your log';
+      } else hint.textContent = lastRead ? `Last reading ${km(lastRead.odometerKm)} on ${fmtDay(lastRead.dateTime)}` : 'Enter the reading on your bike’s odometer';
+      // km insight
+      const prevChange = x.date ? calc.oilAsc(others).filter(r => r.type === 'change' && calc.hasOdo(r) && r.dateTime.slice(0,10) <= x.date).pop() : null;
+      const c = f('oCalc'); let label, val, cap;
+      if(type === 'change'){
+        label = 'Previous oil lasted';
+        if(prevChange && x.odo >= prevChange.odometerKm){ val = km(x.odo - prevChange.odometerKm); cap = `From the oil change on ${fmtDay(prevChange.dateTime, true)} at ${km(prevChange.odometerKm)}.`; }
+        else if(prevChange){ val = '— km'; cap = `Enter an ODO above ${km(prevChange.odometerKm)} from the change on ${fmtDay(prevChange.dateTime, true)}.`; }
+        else { val = 'Start'; cap = 'Your first oil change. Km on this oil is counted from this reading.'; }
+      } else {
+        label = 'Km on current oil';
+        if(prevChange && x.odo >= prevChange.odometerKm){ val = km(x.odo - prevChange.odometerKm); cap = `Since the oil change on ${fmtDay(prevChange.dateTime, true)} at ${km(prevChange.odometerKm)}.`; }
+        else if(prevChange){ val = '— km'; cap = `Enter an ODO above ${km(prevChange.odometerKm)} from the change on ${fmtDay(prevChange.dateTime, true)}.`; }
+        else { val = '— km'; cap = 'Log an oil change to count km on the current oil.'; }
+      }
+      const empty = !(x.odo >= 0) || val.startsWith('—');
+      c.classList.toggle('calc--empty', empty);
+      c.innerHTML = `<div><div class="l">${label}</div><div class="cap">${cap}</div></div><div class="v num">${x.odo >= 0 ? val : '— km'}</div>`;
+      save.disabled = Object.keys(errs).length > 0; return { x, ok:!Object.keys(errs).length };
     };
     $$('[data-type]', el).forEach(b => b.addEventListener('click', () => { type = b.dataset.type; paintType(); validate(); }));
     $$('[data-type]', el).forEach(b => b.addEventListener('keydown', e => { if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ e.preventDefault(); type = type==='topup'?'change':'topup'; paintType(); validate(); $(`[data-type="${type}"]`, el).focus(); } }));
@@ -976,11 +1067,13 @@ function openOilForm(rec){
     f('moreBtn').addEventListener('click', () => { const open = f('moreBtn').getAttribute('aria-expanded') !== 'true'; f('moreBtn').setAttribute('aria-expanded', String(open)); f('moreBox').hidden = !open; if(open) setTimeout(()=>f('oBrand').focus({preventScroll:false}),30); });
     $$('input,textarea', el).forEach(i => { i.addEventListener('input', () => { touched.add(i.id); validate(); }); i.addEventListener('blur', () => { if(i.value) touched.add(i.id); validate(); }); });
     paintType(); validate();
-    if(!isEdit) setTimeout(() => { try{ f('oQty').focus({preventScroll:true}); }catch(e){} }, 80);
-    const submit = async e => { if(e) e.preventDefault(); ['oDate','oTime','oQty','oAmount','oOdo'].forEach(i=>touched.add(i)); const {x, ok, L} = validate(); if(!ok) return;
+    if(!isEdit) setTimeout(() => { try{ f('oOdo').focus({preventScroll:true}); }catch(e){} }, 80);
+    const submit = async e => { if(e) e.preventDefault(); ['oDate','oOdo','oQty'].forEach(i=>touched.add(i)); const {x, ok} = validate(); if(!ok) return;
+      // No time is asked for oil: keep the stored time on edit, use the current time for today, midday for past dates (keeps same-day order stable)
+      const t = rec && rec.dateTime.slice(0,10) === x.date ? rec.dateTime.slice(11,16) : x.date === nowParts().date ? nowParts().time : '12:00';
       const stamp = new Date().toISOString();
-      const out = { id: rec ? rec.id : uid('oil'), type, dateTime:`${x.date}T${x.time}`, quantity:x.qty, unit, litres:L, amount:x.amount,
-        brand:x.brand || null, grade:x.grade || null, odometerKm:x.odo, notes:x.notes, createdAt: rec ? rec.createdAt : stamp, updatedAt:stamp };
+      const out = { id: rec ? rec.id : uid('oil'), type, dateTime:`${x.date}T${t}`, quantity:x.qty, unit, litres:calc.oilToLitres(x.qty, unit),
+        odometerKm:x.odo, brand:x.brand || null, grade:x.grade || null, notes:x.notes, createdAt: rec ? rec.createdAt : stamp, updatedAt:stamp };
       if(rec && rec.sample) out.sample = true;
       save.disabled = true; const done = await Store.put('oil', out);
       if(done){ closeAll(); toast(isEdit ? 'Engine oil record updated' : (type === 'change' ? 'Oil change saved' : 'Oil top-up saved')); } else save.disabled = false;
@@ -999,18 +1092,22 @@ function openDetail(kind, id){
       <div class="frow"><span class="lbl">Total amount paid</span><span class="val num">${tk(r.amount)}</span></div>
       <div class="frow"><span class="lbl">Base price / L</span><span class="val num">${tkL(r.basePrice)}<small>as recorded</small></span></div>
       <div class="frow"><span class="lbl">Effective price / L</span><span class="val num">${tkL(eff)}<small>calculated · ${Math.abs(eff-r.basePrice)<0.005?'matches base':`${tk(Math.abs(eff-r.basePrice),2)} ${eff>r.basePrice?'above':'below'} base`}</small></span></div>`;
-  } else { const eff = calc.oilEffective(r);
+  } else { const k = calc.oilKm(Store.oil, r); let distRow = '';
+    if(k.kind === 'lasted') distRow = `<div class="frow"><span class="lbl">This oil lasted</span><span class="val num">${k.km != null ? km(k.km) : '—'}<small>until the change on ${fmtDay(k.until.dateTime, true)}</small></span></div>`;
+    else if(k.kind === 'running') distRow = `<div class="frow"><span class="lbl">Km on this oil</span><span class="val num">${k.km != null ? km(k.km) : '—'}<small>${k.asOf.id === r.id ? 'no later reading yet' : 'to the reading on ' + fmtDay(k.asOf.dateTime, true)}</small></span></div>`;
+    else if(k.kind === 'since') distRow = `<div class="frow"><span class="lbl">After oil change</span><span class="val num">${k.km != null ? km(k.km) : '—'}<small>change on ${fmtDay(k.change.dateTime, true)}</small></span></div>`;
+    const nr = '<span style="color:var(--faint);font-weight:500">Not recorded</span>';
     rows = `<div class="frow"><span class="lbl">Activity type</span><span class="tag tag--sm tag--${r.type}">${ic(r.type==='change'?'change':'drop')}${r.type==='change'?'Oil change':'Top-up'}</span></div>
+      <div class="frow"><span class="lbl">Date</span><span class="val num">${fmtLong(r.dateTime)}</span></div>
+      <div class="frow"><span class="lbl">Odometer</span><span class="val num">${calc.hasOdo(r) ? km(r.odometerKm) : nr}</span></div>
+      ${distRow}
       <div class="frow"><span class="lbl">Quantity</span><span class="val num">${oilQty(r)}${r.unit==='mL'?`<small>${trimL(r.litres)}</small>`:''}</span></div>
-      <div class="frow"><span class="lbl">Total amount paid</span><span class="val num">${tk(r.amount)}</span></div>
-      <div class="frow"><span class="lbl">Effective price / L</span><span class="val num">${eff!=null ? tk(eff, eff%1?2:0)+'/L' : '—'}<small>calculated from this entry</small></span></div>
-      <div class="frow"><span class="lbl">Brand / product</span><span class="val">${r.brand ? esc(r.brand) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>
-      <div class="frow"><span class="lbl">Oil grade</span><span class="val">${r.grade ? esc(r.grade) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>
-      <div class="frow"><span class="lbl">Odometer</span><span class="val num">${r.odometerKm!=null ? km(r.odometerKm) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>`;
+      <div class="frow"><span class="lbl">Brand / product</span><span class="val">${r.brand ? esc(r.brand) : nr}</span></div>
+      <div class="frow"><span class="lbl">Oil grade</span><span class="val">${r.grade ? esc(r.grade) : nr}</span></div>`;
   }
   const html = `<div class="sheet__head"><button class="circle-btn" data-dismiss aria-label="Close">${ic('close')}</button><h2>${kind==='fuel'?'Refueling':'Engine oil'}</h2><span></span></div>
     <div class="sheet__body">
-      <div class="card namecard"><div><div class="serif">${d.label}</div><div class="sub num">${fmtLong(r.dateTime)} · ${fmtTime(r.dateTime)}</div></div><span class="tile tile--lg tile--${d.tile}">${ic(d.icon)}</span></div>
+      <div class="card namecard"><div><div class="serif">${d.label}</div><div class="sub num">${fmtLong(r.dateTime)}${kind==='fuel' ? ' · ' + fmtTime(r.dateTime) : ''}</div></div><span class="tile tile--lg tile--${d.tile}">${ic(d.icon)}</span></div>
       <div class="fgroup detail-rows">${rows}</div>
       ${r.notes ? `<div class="fgroup"><div class="notebox">${esc(r.notes)}</div></div>` : ''}
       ${r.sample ? `<p class="note-line">This is an example record.</p>` : ''}
