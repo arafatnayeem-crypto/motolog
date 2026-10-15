@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F7F5FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D11" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MotoLog">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Personal motorcycle log for refuelings and engine oil.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>MotoLog</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width column, Tiimo-style — serif hero, pastel tag pills, white task-cards, floating pill nav, bottom sheets */
+:root{
+  --bg:#F7F5FA; --surface:#FFFFFF; --surface-2:#F0EDF4; --line:#ECE8F1; --line-strong:#DCD7E3;
+  --ink:#17151C; --ink-2:#56515F; --muted:#8C8796; --faint:#B5B0BE;
+  --accent:#9D8BF4; --accent-ink:#5B47C9; --on-accent:#FFFFFF;
+  --fuel:#E7E3FD; --fuel-ink:#5B47C9;
+  --topup:#FDE7DA; --topup-ink:#B45A2B;
+  --change:#FBF0C8; --change-ink:#86670C;
+  --oil:#FDE7DA; --oil-ink:#B45A2B;
+  --danger:#E5484D; --danger-wash:#FDECEC;
+  --scrim:rgba(23,21,28,.22);
+  --shadow:0 1px 2px rgba(23,21,28,.04),0 6px 20px rgba(23,21,28,.06);
+  --shadow-lg:0 2px 6px rgba(23,21,28,.06),0 18px 48px rgba(23,21,28,.14);
+  --font-display:"DM Serif Display",Georgia,"Times New Roman",serif;
+  --font-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.32,.72,0,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E0D11; --surface:#1A1920; --surface-2:#25232C; --line:#2A2831; --line-strong:#3A3742;
+  --ink:#F3F1F6; --ink-2:#C6C2CD; --muted:#918C9B; --faint:#5E5A66;
+  --accent:#A796F7; --accent-ink:#C8BCFF; --on-accent:#14121A;
+  --fuel:#2A2645; --fuel-ink:#C6BBFF;
+  --topup:#3A271D; --topup-ink:#F3AE87;
+  --change:#352D14; --change-ink:#E9CB69;
+  --oil:#3A271D; --oil-ink:#F3AE87;
+  --danger:#FF6B6E; --danger-wash:#3B1C1E;
+  --scrim:rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.35),0 18px 48px rgba(0,0,0,.5);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E0D11; --surface:#1A1920; --surface-2:#25232C; --line:#2A2831; --line-strong:#3A3742;
+  --ink:#F3F1F6; --ink-2:#C6C2CD; --muted:#918C9B; --faint:#5E5A66;
+  --accent:#A796F7; --accent-ink:#C8BCFF; --on-accent:#14121A;
+  --fuel:#2A2645; --fuel-ink:#C6BBFF;
+  --topup:#3A271D; --topup-ink:#F3AE87;
+  --change:#352D14; --change-ink:#E9CB69;
+  --oil:#3A271D; --oil-ink:#F3AE87;
+  --danger:#FF6B6E; --danger-wash:#3B1C1E;
+  --scrim:rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.35),0 18px 48px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3,p,dl,dd,ul{margin:0;padding:0}
+ul{list-style:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+.num{font-variant-numeric:tabular-nums}
+.serif{font-family:var(--font-display);font-weight:400}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.app{max-width:460px;margin:0 auto;min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(128px + env(safe-area-inset-bottom,0px))}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0 10px;background:linear-gradient(var(--bg) 70%,transparent)}
+.topbar__r{display:flex;gap:8px}
+.pill-btn{height:44px;padding:0 18px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow);font-weight:600;font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:transform .15s}
+.circle-btn{width:44px;height:44px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;flex:none;transition:transform .15s,background .2s}
+.circle-btn svg,.pill-btn svg{width:20px;height:20px}
+.pill-btn:active,.circle-btn:active,.press:active{transform:scale(.96)}
+.brand{font-family:var(--font-display);font-size:17px;letter-spacing:.005em}
+
+.hero{text-align:center;margin:6px 0 16px}
+.hero h1{font-family:var(--font-display);font-weight:400;font-size:46px;line-height:1.02;letter-spacing:-.01em;text-wrap:balance}
+.hero p{color:var(--ink-2);font-size:16px;margin-top:6px}
+
+/* month strip (Tiimo week strip) */
+.mstrip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;scroll-snap-type:x proximity}
+.mstrip::-webkit-scrollbar{display:none}
+.mchip{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;gap:5px;scroll-snap-align:center}
+.mchip .c{width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-weight:600;font-size:13.5px;transition:background .25s,color .25s,transform .2s}
+.mchip small{font-size:11px;color:var(--muted);font-weight:600;height:14px;display:flex;align-items:center;gap:4px}
+.mchip .has{width:5px;height:5px;border-radius:50%;background:var(--faint)}
+.mchip[aria-pressed="true"] .c{background:var(--ink);color:var(--bg)}
+.mchip[aria-pressed="true"] small{color:var(--ink)}
+
+/* groups & tags */
+.group{margin-top:26px}
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;min-height:32px}
+.tag{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.tag svg{width:15px;height:15px}
+.tag--fuel{background:var(--fuel);color:var(--fuel-ink)}
+.tag--oil,.tag--topup{background:var(--topup);color:var(--topup-ink)}
+.tag--change{background:var(--change);color:var(--change-ink)}
+.tag--sm{height:24px;padding:0 9px;font-size:10px;letter-spacing:.09em;gap:5px}
+.tag--sm svg{width:12px;height:12px}
+.count{font-weight:700;opacity:.75}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.stack{display:flex;flex-direction:column;gap:8px}
+
+/* activity rows (Tiimo task cards) */
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px 12px 12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;transition:transform .15s,box-shadow .2s}
+.row:hover{box-shadow:var(--shadow)}
+.row:active{transform:scale(.985)}
+.row__main{flex:1;min-width:0}
+.row__title{font-weight:600;font-size:15px;line-height:1.25}
+.row__sub{color:var(--ink-2);font-size:13.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row__when{text-align:right;flex:none;font-size:12.5px;color:var(--muted);line-height:1.35}
+.row__when b{display:block;color:var(--ink);font-weight:600;font-size:13px}
+.tile{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none}
+.tile svg{width:21px;height:21px}
+.tile--fuel{background:var(--fuel);color:var(--fuel-ink)}
+.tile--topup{background:var(--topup);color:var(--topup-ink)}
+.tile--change{background:var(--change);color:var(--change-ink)}
+.tile--lg{width:52px;height:52px;border-radius:16px}
+.tile--lg svg{width:26px;height:26px}
+
+.slot{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:1.5px dashed var(--line-strong);border-radius:16px;padding:14px 14px 14px 16px;color:var(--muted);font-size:14.5px}
+.slot .plus{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-2)}
+.slot .plus svg{width:14px;height:14px}
+
+.linkrow{display:flex;justify-content:center;margin-top:12px}
+.ghost{height:40px;padding:0 16px;border-radius:999px;background:var(--surface-2);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.ghost svg{width:16px;height:16px}
+
+/* segmented (Tiimo toggle pills) */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px;position:relative}
+.seg button{height:30px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:background .2s,color .2s,box-shadow .2s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(23,21,28,.1)}
+.seg--lg{display:flex}
+.seg--lg button{flex:1;height:40px;font-size:14.5px}
+
+/* spending */
+.spend{padding:20px 20px 18px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.big{font-family:var(--font-display);font-size:44px;line-height:1.05;margin-top:6px;letter-spacing:-.01em}
+.split{display:flex;gap:4px;height:10px;margin:16px 0 14px}
+.split span{border-radius:999px;min-width:6px;transition:flex-grow .6s var(--ease)}
+.split .s-fuel{background:var(--accent)}
+.split .s-oil{background:var(--topup-ink);opacity:.75}
+.split .s-none{background:var(--surface-2);flex:1}
+.legend{display:grid;gap:8px}
+.legend div{display:flex;justify-content:space-between;align-items:center;font-size:14.5px}
+.legend dt{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.legend dd{font-weight:600}
+.legend .tot{border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
+.legend .tot dt{color:var(--ink);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot--fuel{background:var(--accent)}
+.dot--oil{background:var(--topup-ink);opacity:.75}
+
+/* last-record card */
+.last{padding:16px}
+.last__head{display:flex;align-items:center;gap:12px}
+.last__head .when{color:var(--muted);font-size:13px}
+.last__head .what{font-weight:600}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.kv dt{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kv dd{font-size:16px;font-weight:600;margin-top:2px}
+.kv dd small{font-weight:500;color:var(--muted);font-size:12.5px}
+
+/* stat tiles (Tiimo insight tiles) */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.stat{border-radius:18px;padding:14px 14px 13px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.stat .v{font-family:var(--font-display);font-size:28px;line-height:1.05}
+.stat .v small{font-family:var(--font-body);font-size:13px;color:var(--muted);font-weight:600;margin-left:2px}
+.stat .l{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.stat .h{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.stat--fuel{background:var(--fuel);border-color:transparent}
+.stat--fuel .l{color:var(--fuel-ink);opacity:.85}
+.stat--oil{background:var(--topup);border-color:transparent}
+.stat--oil .l{color:var(--topup-ink);opacity:.9}
+.stat--change{background:var(--change);border-color:transparent}
+.stat--change .l{color:var(--change-ink)}
+
+/* chart */
+.chart{padding:16px 16px 12px;margin-top:8px}
+.chart__head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chart__head h3{font-size:15px;font-weight:600}
+.chart__legend{display:flex;gap:12px;font-size:12px;color:var(--muted)}
+.chart__legend span{display:inline-flex;align-items:center;gap:5px}
+.chart svg{width:100%;height:auto;display:block;margin-top:8px;overflow:visible}
+.chart .note{font-size:13px;color:var(--muted);padding:18px 0 8px}
+.ln-base{fill:none;stroke:var(--accent);stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}
+.ar-base{fill:var(--accent);opacity:.12}
+.dt-eff{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.5}
+.gridl{stroke:var(--line);stroke-width:1}
+.axis{fill:var(--muted);font-size:10.5px;font-family:var(--font-body)}
+.endlab{fill:var(--accent-ink);font-size:11px;font-weight:700;font-family:var(--font-body)}
+.draw{stroke-dasharray:1200;stroke-dashoffset:1200;animation:draw 1.1s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.note-line{font-size:12.5px;color:var(--muted);margin-top:10px;padding:0 4px}
+.prod{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;margin-top:8px}
+.prod .l{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.prod .v{font-weight:600;text-align:right}
+
+/* history */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.chipf{height:34px;padding:0 13px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.chipf svg{width:15px;height:15px}
+.chipf[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.summary{padding:16px;margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+.summary .full,.summary .wide{grid-column:1/-1}
+.summary dt{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.summary dd{font-size:17px;font-weight:600;margin-top:2px}
+.summary .full dd{font-family:var(--font-display);font-size:34px;font-weight:400;line-height:1.05}
+.summary .full .cap{font-size:13px;color:var(--ink-2);margin-top:4px}
+
+/* settings list (Tiimo "Me" list card) */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 16px;width:100%;text-align:left;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li svg.ic{width:20px;height:20px;color:var(--ink-2);flex:none}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-weight:600;font-size:15px}
+.li .t span{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.li .r{color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px;flex:none}
+.li .r svg{width:16px;height:16px}
+.li--danger b{color:var(--danger)}
+.li--danger svg.ic{color:var(--danger)}
+.sect{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:24px 4px 8px}
+.foot{text-align:center;margin-top:34px}
+.foot h3{font-family:var(--font-display);font-weight:400;font-size:24px;text-wrap:balance}
+.foot p{color:var(--muted);font-size:13.5px;margin-top:6px}
+.foot small{display:block;color:var(--faint);font-size:12px;margin-top:14px}
+.inline-input{width:96px;height:36px;border-radius:999px;border:0;background:var(--surface-2);text-align:right;padding:0 12px;font-weight:600}
+
+/* bottom nav (Tiimo floating pill) */
+.nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(340px,calc(100% - 32px));height:68px;padding:6px;border-radius:999px;background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--line);box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(3,1fr);z-index:20}
+.nav__ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/3);border-radius:999px;background:var(--surface-2);transition:transform .45s var(--ease)}
+.nav button{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);border-radius:999px;transition:color .2s}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--ink)}
+
+/* layers: sheets + action sheets */
+.layer{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .3s}
+.layer.blur .scrim{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.layer.on .scrim{opacity:1}
+.sheet{position:relative;width:100%;max-width:460px;max-height:calc(100% - 36px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;background:var(--bg);border-radius:30px 30px 0 0;box-shadow:var(--shadow-lg);transform:translateY(104%);transition:transform .48s var(--ease)}
+.layer.on .sheet{transform:none}
+.sheet__head{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;padding:16px max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px))}
+.sheet__head h2{text-align:center;font-size:17px;font-weight:600}
+.sheet__body{overflow-y:auto;padding:4px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.save{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);transition:background .25s,transform .15s,opacity .2s;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 40%,transparent)}
+.save svg{width:22px;height:22px}
+.save:disabled{background:var(--surface-2);color:var(--faint);box-shadow:none;cursor:not-allowed}
+
+.namecard{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 14px 14px 18px}
+.namecard .serif{font-size:25px;line-height:1.1}
+.namecard .sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+.fgroup{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.frow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:58px;padding:8px 14px 8px 18px;border-bottom:1px solid var(--line)}
+.frow:last-child{border-bottom:0}
+.frow > label,.frow > .lbl{font-size:15px;font-weight:500;flex:none}
+.frow .opt{color:var(--faint);font-weight:500;font-size:12.5px;margin-left:4px}
+.vpill{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 6px 0 12px;border-radius:999px;background:var(--surface-2);min-width:0;transition:box-shadow .2s}
+.vpill:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.vpill svg{width:16px;height:16px;color:var(--ink-2);flex:none}
+.vpill input{border:0;background:transparent;outline:none;font-weight:600;font-size:15px;min-width:0;padding:0 6px 0 0}
+.vpill input[type=date]{width:128px}
+.vpill input[type=time]{width:92px}
+.vpill .unit{font-weight:600;color:var(--muted);padding-right:8px;font-size:14px}
+.vpill input.n{width:96px;text-align:right}
+.vpill input.t{width:150px}
+.vpill.bad{box-shadow:0 0 0 2px var(--danger)}
+.unitseg{display:inline-flex;background:var(--surface);border-radius:999px;padding:2px;margin-left:2px}
+.unitseg button{height:30px;min-width:38px;padding:0 9px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted)}
+.unitseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.ferr{color:var(--danger);font-size:12.5px;padding:0 6px}
+
+.types{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:14px;border-radius:18px;background:var(--surface);border:1.5px solid var(--line);text-align:left;transition:border-color .2s,background .2s,transform .15s}
+.type b{font-size:15px;font-weight:600}
+.type span{font-size:12.5px;color:var(--muted);line-height:1.3}
+.type[aria-checked="true"]{border-color:var(--ink)}
+.type[aria-checked="true"].type--topup{background:var(--topup)}
+.type[aria-checked="true"].type--change{background:var(--change)}
+.type[aria-checked="true"] span{color:var(--ink-2)}
+
+.calc{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.calc .l{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.calc .v{font-family:var(--font-display);font-size:26px;line-height:1.1;text-align:right}
+.calc .cap{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:30ch}
+.calc--empty .v{color:var(--faint)}
+
+.more{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px 18px;font-weight:600}
+.more svg{width:18px;height:18px;color:var(--muted);transition:transform .3s var(--ease)}
+.more[aria-expanded="true"] svg{transform:rotate(180deg)}
+.notes{width:100%;min-height:92px;resize:vertical;border:0;background:transparent;padding:16px 18px;outline:none;font-size:15px}
+.notes::placeholder,.vpill input::placeholder{color:var(--faint);font-weight:500}
+.quick{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:999px;background:var(--surface-2);font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.quickrow{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px}
+
+.detail-rows .frow{min-height:52px}
+.detail-rows .val{font-weight:600;text-align:right}
+.detail-rows .val small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.notebox{padding:14px 18px;color:var(--ink-2);white-space:pre-wrap}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.trash{width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--danger)}
+.trash svg{width:22px;height:22px}
+.cta{height:52px;padding:0 24px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:600;font-size:15.5px;display:inline-flex;align-items:center;gap:8px;transition:transform .15s}
+.cta svg{width:18px;height:18px}
+.cta--wide{width:100%;justify-content:center}
+
+/* action sheet (Tiimo context menu) */
+.asheet{position:relative;width:calc(100% - 24px);max-width:440px;margin-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;transform:translateY(24px) scale(.96);opacity:0;transition:transform .42s var(--ease),opacity .25s}
+.layer.on .asheet{transform:none;opacity:1}
+.amenu{background:var(--surface);border-radius:24px;box-shadow:var(--shadow-lg);overflow:hidden}
+.amenu .msg{padding:18px 20px 12px;font-size:14px;color:var(--ink-2);border-bottom:1px solid var(--line)}
+.amenu .msg b{display:block;color:var(--ink);font-size:16px;margin-bottom:3px}
+.aitem{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);min-height:56px;transition:background .15s}
+.aitem:last-child{border-bottom:0}
+.aitem:active{background:var(--surface-2)}
+.aitem .t b{display:block;font-weight:600;font-size:16px}
+.aitem .t span{display:block;font-size:13px;color:var(--muted);margin-top:1px}
+.aitem > svg{width:20px;height:20px;color:var(--ink-2)}
+.aitem--danger{color:var(--danger)}
+.aitem--danger > svg{color:var(--danger)}
+.aitem .chk{margin-left:auto;width:20px;height:20px;color:var(--accent-ink)}
+.acancel{height:56px;border-radius:20px;background:var(--surface);box-shadow:var(--shadow-lg);font-weight:600;font-size:16px}
+.range-custom{display:flex;flex-direction:column;gap:8px;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.range-custom .frow{padding:0;min-height:48px;border:0}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-weight:600;font-size:14px;z-index:60;transition:opacity .25s,transform .35s var(--ease);pointer-events:none;max-width:calc(100% - 32px);text-align:center;display:flex;align-items:center;gap:8px}
+.toast svg{width:16px;height:16px}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.banner{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;border-radius:16px;background:var(--surface-2);font-size:13px;color:var(--ink-2);margin-top:12px}
+.banner b{color:var(--ink)}
+.banner .ghost{height:32px;font-size:13px;margin-left:auto;background:var(--surface);flex:none}
+
+.skel{background:var(--surface-2);border-radius:18px;height:64px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.5}}
+.enter > *{animation:rise .45s var(--ease) both}
+.enter > *:nth-child(2){animation-delay:.04s}.enter > *:nth-child(3){animation-delay:.08s}.enter > *:nth-child(4){animation-delay:.12s}.enter > *:nth-child(5){animation-delay:.16s}.enter > *:nth-child(6){animation-delay:.2s}.enter > *:nth-child(n+7){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+@media (max-width:360px){.hero h1{font-size:38px}.big{font-size:38px}.vpill input.n{width:76px}.vpill input[type=date]{width:118px}}
+</style>
+
+<div class="app" id="app" aria-live="polite"></div>
+<nav class="nav" id="nav" aria-label="Main">
+  <span class="nav__ind" id="navInd"></span>
+  <button data-tab="overview" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="8" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="14.5" width="7" height="6" rx="2"/></svg>Overview</button>
+  <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="3"/><path d="M8 2.5v3M16 2.5v3M4 9h16M8 13h5M8 16.5h8"/></svg>History</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+/* ───────── icons ───────── */
+const P = {
+  fuel:'<path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 20h12M7 8h4"/><path d="M14 10h2a2 2 0 0 1 2 2v4.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',
+  drop:'<path d="M12 3.5s6 6.4 6 10.7a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5z"/><path d="M12 11v6M9 14h6"/>',
+  change:'<path d="M20 12a8 8 0 0 1-14.3 4.9M4 12A8 8 0 0 1 18.3 7.1"/><path d="M18.5 3v4.3h-4.3M5.5 21v-4.3h4.3"/><path d="M12 9.2s2 2.1 2 3.4a2 2 0 0 1-4 0c0-1.3 2-3.4 2-3.4z"/>',
+  oil:'<path d="M4 12.5h9l5-3 2.5 1.5-5.5 7H5a1 1 0 0 1-1-1z"/><path d="M8 12.5V10h3v2.5M20.5 14.5s.9 1 .9 1.6a.9.9 0 0 1-1.8 0c0-.6.9-1.6.9-1.6z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  right:'<path d="M9 6l6 6-6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>',
+  edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/>',
+  gauge:'<path d="M4.5 17a8 8 0 1 1 15 0"/><path d="M12 13l3.5-3.5"/><circle cx="12" cy="13" r="1"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  tag:'<path d="M3.5 12.5V5a1.5 1.5 0 0 1 1.5-1.5h7.5l8 8-9 9z"/><circle cx="8" cy="8" r="1.4"/>',
+  db:'<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
+  filter:'<path d="M4 6h16M7 12h10M10 18h4"/>'
+};
+const ic = (n, cls) => `<svg${cls?` class="${cls}"`:''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+/* ───────── helpers ───────── */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2 = n => Math.round((Number(n)+Number.EPSILON)*100)/100;
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MSHORT = MONTHS.map(m => m.slice(0,3));
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+function nowParts(){ const d = new Date(); return { date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`, time:`${pad(d.getHours())}:${pad(d.getMinutes())}` }; }
+const curMonth = () => nowParts().date.slice(0,7);
+function parseNum(v){ if(v==null) return NaN; const s = String(v).trim().replace(/,/g,'.'); if(!s || !/^\d*\.?\d+$|^\d+\.$/.test(s)) return NaN; return parseFloat(s); }
+function tk(n, dp){ n = Number(n)||0; const whole = Math.abs(n - Math.round(n)) < 0.005; const d = dp!=null ? dp : (whole?0:2);
+  return '৳' + n.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+const tkL = n => tk(n,2) + '/L';
+const litres = (n, min=2) => (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:min,maximumFractionDigits:2}) + ' L';
+const oilQty = r => r.unit === 'mL' ? `${(Number(r.quantity)||0).toLocaleString('en-US',{maximumFractionDigits:1})} mL` : litres(r.quantity,1);
+const trimL = n => (Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:3}) + ' L';
+const km = n => (Number(n)||0).toLocaleString('en-US') + ' km';
+function dParts(dt){ const [d,t] = dt.split('T'); const [y,m,da] = d.split('-').map(Number); const [hh,mm] = (t||'00:00').split(':').map(Number); return {y,m,da,hh,mm, js:new Date(y,m-1,da,hh,mm)}; }
+function fmtTime(dt){ const p = dParts(dt); const h = p.hh%12 || 12; return `${h}:${pad(p.mm)} ${p.hh<12?'AM':'PM'}`; }
+function fmtDay(dt, withYear){ const p = dParts(dt); const t = nowParts().date; const d = dt.slice(0,10);
+  const y = new Date(); y.setDate(y.getDate()-1); const yd = `${y.getFullYear()}-${pad(y.getMonth()+1)}-${pad(y.getDate())}`;
+  if(d===t) return 'Today'; if(d===yd) return 'Yesterday';
+  const base = `${p.da} ${MSHORT[p.m-1]}`; return withYear || p.y !== new Date().getFullYear() ? `${base} ${p.y}` : base; }
+function fmtLong(dt){ const p = dParts(dt); return `${DAYS[p.js.getDay()]}, ${p.da} ${MONTHS[p.m-1]} ${p.y}`; }
+function monthLabel(key){ const [y,m] = key.split('-').map(Number); return {name:MONTHS[m-1], short:MSHORT[m-1], y}; }
+function addMonths(key, n){ let [y,m] = key.split('-').map(Number); m += n; while(m<1){m+=12;y--} while(m>12){m-=12;y++} return `${y}-${pad(m)}`; }
+
+/* ───────── categories registry (future: oil filter, air filter, brake pads register here) ───────── */
+const CATEGORIES = {
+  fuel: { label:'Fuel', collection:'fuel' },
+  oil:  { label:'Engine oil', collection:'oil' }
+};
+
+/* ───────── calculations (pure) ───────── */
+const calc = {
+  oilToLitres(q, unit){ q = Number(q)||0; return unit === 'mL' ? q/1000 : q; },
+  fuelEffective(r){ return r.litres > 0 ? r.amount / r.litres : null; },
+  oilEffective(r){ return r.litres > 0 && r.amount > 0 ? r.amount / r.litres : null; },
+  sortDesc(a,b){ return a.dateTime < b.dateTime ? 1 : a.dateTime > b.dateTime ? -1 : ((b.createdAt||'') > (a.createdAt||'') ? 1 : -1); },
+  inMonth(list, key){ return list.filter(r => r.dateTime.slice(0,7) === key); },
+  inRange(list, from, to){ return list.filter(r => { const d = r.dateTime.slice(0,10); return (!from || d >= from) && (!to || d <= to); }); },
+  sum(list, f){ return r2(list.reduce((a,r) => a + (Number(f(r))||0), 0)); },
+  fuelSummary(list){
+    const count = list.length, spend = calc.sum(list, r=>r.amount), L = r2(list.reduce((a,r)=>a+(Number(r.litres)||0),0)*1000)/1000;
+    return { count, spend, litres:L, avgLitres: count ? L/count : 0, avgEffective: L>0 ? spend/L : null };
+  },
+  oilSummary(list){
+    const topups = list.filter(r=>r.type==='topup'), changes = list.filter(r=>r.type==='change');
+    const spend = calc.sum(list, r=>r.amount);
+    const lt = l => Math.round(l.reduce((a,r)=>a+(Number(r.litres)||0),0)*10000)/10000;
+    return { count:list.length, topups:topups.length, changes:changes.length, spend,
+      topupLitres:lt(topups), changeLitres:lt(changes), totalLitres:lt(list),
+      avgCost: list.length ? spend/list.length : null };
+  },
+  month(state, key){
+    const f = calc.fuelSummary(calc.inMonth(state.fuel, key));
+    const o = calc.oilSummary(calc.inMonth(state.oil, key));
+    return { fuel:f, oil:o, combined: r2(f.spend + o.spend) };
+  },
+  timeline(state, filter){
+    const rows = [];
+    if(filter !== 'oil') state.fuel.forEach(r => rows.push(Object.assign({kind:'fuel'}, r)));
+    if(filter !== 'fuel') state.oil.forEach(r => rows.push(Object.assign({kind:'oil'}, r)));
+    return rows.sort(calc.sortDesc);
+  }
+};
+
+/* ───────── example records (used only when this view has no shared store) ───────── */
+function exampleRecords(){
+  const now = new Date(); const fuel = [], oil = [];
+  const at = (daysAgo, h, m) => { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-daysAgo, h, m); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(h)}:${pad(m)}`; };
+  const stamp = new Date().toISOString();
+  const Ls = [7.2,8.0,6.8,9.1,7.6,8.4,6.5,7.9];
+  const times = [[8,15],[18,40],[9,5],[19,20],[7,50],[17,35],[13,10],[20,5]];
+  let i = 0;
+  for(let ago = 150; ago >= 7; ago -= 6, i++){
+    const base = ago > 105 ? 125 : ago > 62 ? 122 : 120;
+    const L = Ls[i%Ls.length], amt = Math.round(L*base/10)*10, t = times[i%times.length];
+    fuel.push({ id:`fuel_ex${i}`, dateTime:at(ago,t[0],t[1]), litres:L, amount:amt, basePrice:base, notes:'', createdAt:stamp, updatedAt:stamp, sample:true });
+  }
+  fuel.push({ id:'fuel_exlast', dateTime:at(1,18,25), litres:8.5, amount:1020, basePrice:120, notes:'Full tank before the Sreemangal ride', createdAt:stamp, updatedAt:stamp, sample:true });
+  const o = (id, ago, h, m, type, q, unit, amount, brand, grade, odo, notes) => oil.push({ id, type, dateTime:at(ago,h,m), quantity:q, unit, litres:calc.oilToLitres(q,unit), amount, brand, grade, odometerKm:odo, notes, createdAt:stamp, updatedAt:stamp, sample:true });
+  o('oil_ex1',118,10,30,'change',1.0,'L',750,'Motul','10W-40',16240,'Changed at Bhai Bhai Motors, Zindabazar');
+  o('oil_ex2',84,19,10,'topup',200,'mL',180,'Motul','10W-40',null,'');
+  o('oil_ex3',57,9,0,'topup',250,'mL',225,'Motul','10W-40',null,'');
+  o('oil_ex4',25,11,15,'change',1.0,'L',780,'ELF','10W-40',19105,'');
+  o('oil_ex5',25,11,40,'topup',100,'mL',90,'ELF','10W-40',null,'Topped up the same day after the change');
+  o('oil_ex6',3,8,20,'topup',200,'mL',180,'ELF','10W-40',null,'');
+  return { fuel, oil };
+}
+
+/* ───────── store: shared artifact db, with on-device fallback ───────── */
+const LS = 'motolog.v1';
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); return true; } catch(e){ return false; } };
+const DEFAULT_SETTINGS = { defaultBasePrice:120, oilUnit:'mL' };
+
+const Store = {
+  mode:'loading', fuel:[], oil:[], settings:Object.assign({}, DEFAULT_SETTINGS), db:null, got:{}, unsubs:[], persisted:true,
+  async boot(){
+    const hasClaude = !!(window.claude && typeof window.claude.use === 'function');
+    if(!hasClaude){ this.startLocal(); return; }
+    const timer = setTimeout(() => { if(this.mode === 'loading') this.startLocal(); }, 2500);
+    let db = null; try { db = await window.claude.use('db'); } catch(e){ db = null; }
+    clearTimeout(timer);
+    if(db && !(this.mode === 'local' && this.localTouched)) this.startCloud(db);
+    else if(this.mode === 'loading') this.startLocal();
+  },
+  startLocal(){
+    this.unsubs.forEach(u => { try{u()}catch(e){} }); this.unsubs = [];
+    this.mode = 'local';
+    let data = null; try { data = JSON.parse(lsGet(LS) || 'null'); } catch(e){}
+    if(data && Array.isArray(data.fuel)){ this.fuel = data.fuel; this.oil = data.oil||[]; this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings||{}); }
+    else { const ex = exampleRecords(); this.fuel = ex.fuel; this.oil = ex.oil; this.saveLocal(); }
+    this.persisted = lsGet(LS) != null;
+    App.render(true);
+  },
+  saveLocal(){ this.persisted = lsSet(LS, JSON.stringify({fuel:this.fuel, oil:this.oil, settings:this.settings})); },
+  startCloud(db){
+    this.unsubs.forEach(u => { try{u()}catch(e){} }); this.unsubs = [];
+    this.db = db; this.mode = 'cloud'; this.got = {};
+    const done = () => { if(this.got.fuel && this.got.oil && this.got.settings){ const first = !this.ready; this.ready = true; App.render(first); } };
+    const onErr = e => { if(e && e.code !== 'unavailable') toast('Sync stopped. Changes now stay on this device.'); this.toLocalCopy(); };
+    ['fuel','oil'].forEach(k => {
+      this.unsubs.push(db.collection(CATEGORIES[k].collection).onSnapshot(snap => {
+        this[k] = snap.docs.map(d => Object.assign({}, d.data(), {id:d.id})); this.got[k] = true;
+        if(this.ready) App.render(false); else done();
+      }, onErr));
+    });
+    this.unsubs.push(db.doc('settings/app').onSnapshot(snap => {
+      this.settings = Object.assign({}, DEFAULT_SETTINGS, snap.exists ? snap.data() : {}); this.got.settings = true;
+      if(this.ready) App.render(false); else done();
+    }, onErr));
+  },
+  toLocalCopy(){
+    this.unsubs.forEach(u => { try{u()}catch(e){} }); this.unsubs = [];
+    this.mode = 'local'; this.readonlyCloud = true; this.saveLocal(); App.render(false);
+  },
+  async write(fn, localFn){
+    if(this.mode === 'cloud'){
+      try { await fn(); return true; }
+      catch(e){
+        const code = e && e.code;
+        if(code === 'unavailable'){ await new Promise(r => setTimeout(r, 400 + Math.random()*600)); try { await fn(); return true; } catch(e2){} }
+        if(code === 'quota_exceeded'){ toast('Storage is full. Delete some old records, then try again.'); return false; }
+        if(code === 'invalid_argument' || code === 'not_granted' || code === 'revoked'){
+          this.toLocalCopy(); localFn(); this.saveLocal(); App.render(false);
+          toast('You can view this log but not change it, so this change stays on this device.'); return true;
+        }
+        toast('Couldn’t save. Check your connection and try again.'); return false;
+      }
+    }
+    this.localTouched = true; localFn(); this.saveLocal(); App.render(false); return true;
+  },
+  put(kind, rec){
+    const col = CATEGORIES[kind].collection;
+    return this.write(() => this.db.collection(col).doc(rec.id).set(rec), () => {
+      const i = this[kind].findIndex(r => r.id === rec.id); if(i >= 0) this[kind][i] = rec; else this[kind].push(rec);
+    });
+  },
+  remove(kind, id){
+    const col = CATEGORIES[kind].collection;
+    return this.write(() => this.db.collection(col).doc(id).delete(), () => { this[kind] = this[kind].filter(r => r.id !== id); });
+  },
+  saveSettings(patch){
+    const next = Object.assign({}, this.settings, patch);
+    return this.write(() => this.db.doc('settings/app').set(next), () => { this.settings = next; });
+  },
+  async removeWhere(pred){
+    const targets = [...this.fuel.filter(pred).map(r=>['fuel',r.id]), ...this.oil.filter(pred).map(r=>['oil',r.id])];
+    if(this.mode === 'cloud'){ for(const [k,id] of targets){ const ok = await this.remove(k,id); if(!ok) return false; if(this.mode !== 'cloud'){ /* switched to local mid-way */ } } return true; }
+    this.localTouched = true; this.fuel = this.fuel.filter(r => !pred(r)); this.oil = this.oil.filter(r => !pred(r)); this.saveLocal(); App.render(false); return true;
+  },
+  get find(){ return (kind, id) => this[kind].find(r => r.id === id); },
+  get hasSamples(){ return this.fuel.some(r=>r.sample) || this.oil.some(r=>r.sample); }
+};
+
+/* ───────── UI state ───────── */
+const prefs = (() => { try { return JSON.parse(lsGet('motolog.ui') || '{}'); } catch(e){ return {}; } })();
+const UI = {
+  tab:'overview', month:curMonth(), actFilter: prefs.actFilter || 'all',
+  hKind: prefs.hKind || 'fuel', oilType:'all', range:{preset:'all', from:null, to:null}
+};
+const savePrefs = () => lsSet('motolog.ui', JSON.stringify({actFilter:UI.actFilter, hKind:UI.hKind, theme:prefs.theme||'system'}));
+function applyTheme(t){ prefs.theme = t; const root = document.documentElement; if(t === 'light' || t === 'dark') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); savePrefs(); }
+applyTheme(prefs.theme || 'system');
+
+/* ───────── record presentation ───────── */
+function describe(r){
+  if(r.kind === 'fuel') return { title:'Refueled', sub:`${litres(r.litres)} · ${tk(r.amount)}`, tile:'fuel', icon:'fuel', label:'Refueling' };
+  if(r.type === 'change') return { title:'Engine oil changed', sub:`${oilQty(r)} · ${tk(r.amount)}`, tile:'change', icon:'change', label:'Oil change' };
+  return { title:'Engine oil topped up', sub:`${oilQty(r)} · ${tk(r.amount)}`, tile:'topup', icon:'drop', label:'Oil top-up' };
+}
+function rowHTML(r, opts={}){
+  const d = describe(r); let sub = d.sub;
+  if(opts.meta && r.kind === 'oil'){ const bits = [r.brand, r.grade].filter(Boolean).join(' '); if(bits) sub += ` · ${esc(bits)}`; if(r.odometerKm) sub += ` · ${km(r.odometerKm)}`; }
+  if(opts.meta && r.kind === 'fuel') sub += ` · ${tkL(calc.fuelEffective(r))}`;
+  return `<li><button class="row" data-open="${r.kind}:${esc(r.id)}" aria-label="${esc(d.title)}, ${esc(fmtLong(r.dateTime))} ${fmtTime(r.dateTime)}">
+    <span class="tile tile--${d.tile}">${ic(d.icon)}</span>
+    <span class="row__main"><span class="row__title">${d.title}</span><span class="row__sub num">${sub}</span></span>
+    <span class="row__when num"><b>${fmtDay(r.dateTime)}</b>${fmtTime(r.dateTime)}</span></button></li>`;
+}
+
+/* ───────── chart ───────── */
+function priceChart(fuel){
+  const pts = fuel.slice().sort((a,b)=> a.dateTime < b.dateTime ? -1 : 1).slice(-12);
+  if(pts.length < 2) return `<p class="note">Log at least two refuelings to see how the base price moves.</p>`;
+  const W = 320, H = 150, L = 34, R = 40, T = 12, B = 24;
+  const vals = pts.flatMap(p => [Number(p.basePrice), calc.fuelEffective(p)]).filter(v => v!=null && isFinite(v));
+  let lo = Math.floor(Math.min(...vals)) - 1, hi = Math.ceil(Math.max(...vals)) + 1;
+  const span = hi - lo; const step = span <= 6 ? 2 : span <= 15 ? 5 : 10; lo = Math.floor(lo/step)*step; hi = Math.ceil(hi/step)*step;
+  const x = i => L + (W-L-R) * (i/(pts.length-1)), y = v => T + (H-T-B) * (1 - (v-lo)/(hi-lo));
+  let grid = ''; for(let v = lo; v <= hi; v += step){ grid += `<line class="gridl" x1="${L}" x2="${W-R+8}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="axis" x="${L-6}" y="${(y(v)+3.5).toFixed(1)}" text-anchor="end">${v}</text>`; }
+  const path = pts.map((p,i) => `${i?'L':'M'}${x(i).toFixed(1)},${y(p.basePrice).toFixed(1)}`).join('');
+  const area = `${path}L${x(pts.length-1).toFixed(1)},${H-B}L${L},${H-B}Z`;
+  const dots = pts.map((p,i) => `<circle class="dt-eff" cx="${x(i).toFixed(1)}" cy="${y(calc.fuelEffective(p)).toFixed(1)}" r="3"><title>${fmtDay(p.dateTime,true)}: effective ${tkL(calc.fuelEffective(p))}</title></circle>`).join('');
+  const last = pts[pts.length-1];
+  const dl = s => { const p = dParts(s); return `${p.da} ${MSHORT[p.m-1]}`; };
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Base price per litre across the last ${pts.length} refuelings, from ${tk(pts[0].basePrice,2)} to ${tk(last.basePrice,2)}">
+    ${grid}<path class="ar-base" d="${area}"/><path class="ln-base draw" d="${path}"/>${dots}
+    <circle cx="${x(pts.length-1).toFixed(1)}" cy="${y(last.basePrice).toFixed(1)}" r="4.5" fill="var(--accent)"/>
+    <text class="endlab num" x="${(x(pts.length-1)+8).toFixed(1)}" y="${(y(last.basePrice)+4).toFixed(1)}">${Math.round(last.basePrice*100)/100}</text>
+    <text class="axis" x="${L}" y="${H-6}">${dl(pts[0].dateTime)}</text><text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${dl(last.dateTime)}</text></svg>`;
+}
+
+/* ───────── screens ───────── */
+function monthsAvailable(){
+  const cur = curMonth(); const all = [...Store.fuel, ...Store.oil].map(r => r.dateTime.slice(0,7)).filter(k => k <= cur).sort();
+  let start = all.length ? all[0] : cur; const minStart = addMonths(cur, -5); const maxBack = addMonths(cur, -23);
+  if(start > minStart) start = minStart; if(start < maxBack) start = maxBack;
+  const has = new Set(all); const out = []; for(let k = start; k <= cur; k = addMonths(k,1)) out.push({k, has:has.has(k)}); return out;
+}
+
+function overviewHTML(){
+  const m = calc.month(Store, UI.month); const ml = monthLabel(UI.month); const isCur = UI.month === curMonth();
+  const tl = calc.timeline(Store, UI.actFilter).slice(0,5);
+  const fuelSorted = Store.fuel.slice().sort(calc.sortDesc), oilSorted = Store.oil.slice().sort(calc.sortDesc);
+  const lf = fuelSorted[0], lo = oilSorted[0];
+  const lastProduct = oilSorted.find(r => r.brand || r.grade);
+  const f = m.fuel, o = m.oil;
+  const total = m.combined, fp = total ? f.spend/total : 0;
+
+  const spend = `<section class="card spend" aria-label="Monthly spending">
+    <div class="eyebrow">Spent in ${ml.name}${ml.y !== new Date().getFullYear() ? ' '+ml.y : ''}</div>
+    <div class="big num" data-count="${total}">${tk(total)}</div>
+    <div class="split" aria-hidden="true">${total ? `<span class="s-fuel" style="flex-grow:${f.spend}"></span><span class="s-oil" style="flex-grow:${o.spend}"></span>` : `<span class="s-none"></span>`}</div>
+    <dl class="legend num">
+      <div><dt><i class="dot dot--fuel"></i>Fuel</dt><dd>${tk(f.spend)}${total?` <small style="color:var(--muted);font-weight:500">· ${Math.round(fp*100)}%</small>`:''}</dd></div>
+      <div><dt><i class="dot dot--oil"></i>Engine oil</dt><dd>${tk(o.spend)}${total?` <small style="color:var(--muted);font-weight:500">· ${100-Math.round(fp*100)}%</small>`:''}</dd></div>
+      <div class="tot"><dt>Combined</dt><dd>${tk(total)}</dd></div>
+    </dl></section>`;
+
+  const activity = `<section class="group" aria-labelledby="h-act">
+    <div class="ghead"><span class="tag" id="h-act">${ic('clock')}Latest activity</span>
+      <div class="seg" role="group" aria-label="Filter activity">${['all','fuel','oil'].map(k => `<button data-act="${k}" aria-pressed="${UI.actFilter===k}">${k==='all'?'All':k==='fuel'?'Fuel':'Oil'}</button>`).join('')}</div></div>
+    ${tl.length ? `<ul class="stack enter-list">${tl.map(r => rowHTML(r)).join('')}</ul>
+      <div class="linkrow"><button class="ghost" data-goto-history="${UI.actFilter==='oil'?'oil':'fuel'}">Open history ${ic('arrow')}</button></div>`
+    : `<button class="slot" data-add="${UI.actFilter==='oil'?'oil':UI.actFilter==='fuel'?'fuel':''}">${UI.actFilter==='oil'?'No engine oil logged yet':UI.actFilter==='fuel'?'No refuelings logged yet':'Nothing logged yet. Start with your next fill-up.'}<span class="plus">${ic('plus')}</span></button>`}
+  </section>`;
+
+  const fuelSec = `<section class="group" aria-labelledby="h-fuel">
+    <div class="ghead"><span class="tag tag--fuel" id="h-fuel">${ic('fuel')}Fuel <span class="count">(${f.count})</span></span>
+      <button class="circle-btn" style="width:36px;height:36px;box-shadow:none;background:var(--surface-2)" data-add="fuel" aria-label="Log refueling">${ic('plus')}</button></div>
+    ${lf ? `<button class="card last press" style="width:100%;text-align:left;display:block" data-open="fuel:${esc(lf.id)}">
+      <div class="last__head"><span class="tile tile--fuel">${ic('fuel')}</span><div><div class="what">Last refueling</div><div class="when num">${fmtLong(lf.dateTime)} · ${fmtTime(lf.dateTime)}</div></div></div>
+      <dl class="kv num">
+        <div><dt>Litres</dt><dd>${litres(lf.litres)}</dd></div>
+        <div><dt>Paid</dt><dd>${tk(lf.amount)}</dd></div>
+        <div><dt>Effective / L</dt><dd>${tk(calc.fuelEffective(lf),2)}</dd></div>
+        <div><dt>Base / L <small>recorded</small></dt><dd>${tk(lf.basePrice,2)}</dd></div>
+      </dl></button>` : `<button class="slot" data-add="fuel">Log your first refueling<span class="plus">${ic('plus')}</span></button>`}
+    <div class="tiles num">
+      <div class="stat stat--fuel"><div class="v">${f.count}</div><div class="l">Refuelings · ${ml.short}</div></div>
+      <div class="stat stat--fuel"><div class="v">${tk(f.spend)}</div><div class="l">Fuel spend · ${ml.short}</div></div>
+      <div class="stat"><div class="v">${(f.litres).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<small>L</small></div><div class="l">Litres purchased</div></div>
+      <div class="stat"><div class="v">${f.count ? f.avgLitres.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'}${f.count?'<small>L</small>':''}</div><div class="l">Avg per refueling</div></div>
+    </div>
+    <div class="card chart"><div class="chart__head"><h3>Fuel price trend</h3><div class="chart__legend"><span><i class="dot dot--fuel"></i>Base</span><span><i class="dot" style="background:var(--surface);border:1.5px solid var(--ink-2)"></i>Effective</span></div></div>${priceChart(Store.fuel)}</div>
+  </section>`;
+
+  const oilSec = `<section class="group" aria-labelledby="h-oil">
+    <div class="ghead"><span class="tag tag--oil" id="h-oil">${ic('oil')}Engine oil <span class="count">(${o.count})</span></span>
+      <button class="circle-btn" style="width:36px;height:36px;box-shadow:none;background:var(--surface-2)" data-add="oil" aria-label="Log engine oil">${ic('plus')}</button></div>
+    ${lo ? `<ul class="stack">${rowHTML(Object.assign({kind:'oil'}, lo), {meta:true})}</ul>` : `<button class="slot" data-add="oil">Log a top-up or an oil change<span class="plus">${ic('plus')}</span></button>`}
+    <div class="tiles num">
+      <div class="stat stat--oil"><div class="v">${tk(o.spend)}</div><div class="l">Oil spend · ${ml.short}</div></div>
+      <div class="stat stat--oil"><div class="v">${o.count}</div><div class="l">Oil records · ${ml.short}</div><div class="h">${o.topups} top-up${o.topups===1?'':'s'} · ${o.changes} change${o.changes===1?'':'s'}</div></div>
+      <div class="stat"><div class="v">${litres(o.topupLitres,1).replace(' L','')}<small>L</small></div><div class="l">Added in top-ups</div></div>
+      <div class="stat stat--change"><div class="v">${litres(o.changeLitres,1).replace(' L','')}<small>L</small></div><div class="l">Used in oil changes</div></div>
+    </div>
+    <div class="card prod"><span class="l">Latest product</span><span class="v">${lastProduct ? esc([lastProduct.brand, lastProduct.grade].filter(Boolean).join(' · ')) : '<span style="color:var(--muted);font-weight:500">None recorded yet</span>'}</span></div>
+    <p class="note-line">Quantities are what you logged, which may be oil purchased rather than measured engine consumption.</p>
+    <div class="linkrow"><button class="ghost" data-goto-history="oil">View engine oil history ${ic('arrow')}</button></div>
+  </section>`;
+
+  const months = monthsAvailable();
+  return `<header class="topbar">${isCur ? `<span class="pill-btn brand" aria-label="MotoLog">MotoLog</span>` : `<button class="pill-btn" data-month="${curMonth()}">This month</button>`}
+      <div class="topbar__r"><button class="circle-btn" id="addBtn" aria-label="Add record" aria-haspopup="dialog">${ic('plus')}</button></div></header>
+    <div class="hero"><h1>${ml.name}</h1><p class="num">${ml.y} · Fuel &amp; oil overview</p></div>
+    <div class="mstrip" id="mstrip" role="group" aria-label="Choose month">${months.map(x => { const l = monthLabel(x.k); return `<button class="mchip" data-month="${x.k}" aria-pressed="${x.k===UI.month}" aria-label="${l.name} ${l.y}"><span class="c">${l.short}</span><small>${x.has?'<i class="has"></i>':''}${String(l.y).slice(2)}</small></button>`; }).join('')}</div>
+    ${Store.hasSamples ? `<div class="banner">${ic('spark')}<span><b>Example records</b> are showing. Remove them in Settings when you start logging.</span></div>` : ''}
+    <div class="enter">${spend}${activity}${fuelSec}${oilSec}</div>`;
+}
+
+function rangeLabel(){
+  const r = UI.range; const map = {all:'All time', month:'This month', '3m':'Last 3 months', year:'This year'};
+  if(r.preset !== 'custom') return map[r.preset];
+  const f = s => { const p = dParts(s+'T00:00'); return `${p.da} ${MSHORT[p.m-1]} ${String(p.y).slice(2)}`; };
+  return `${r.from ? f(r.from) : 'Start'} – ${r.to ? f(r.to) : 'Today'}`;
+}
+function rangeBounds(){
+  const r = UI.range, t = nowParts().date;
+  if(r.preset === 'month') return [t.slice(0,7)+'-01', null];
+  if(r.preset === '3m') return [addMonths(t.slice(0,7), -2)+'-01', null];
+  if(r.preset === 'year') return [t.slice(0,4)+'-01-01', null];
+  if(r.preset === 'custom') return [r.from, r.to];
+  return [null, null];
+}
+function historyHTML(){
+  const [from, to] = rangeBounds(); const isOil = UI.hKind === 'oil';
+  let list = calc.inRange(isOil ? Store.oil : Store.fuel, from, to);
+  if(isOil && UI.oilType !== 'all') list = list.filter(r => r.type === UI.oilType);
+  list = list.map(r => Object.assign({kind:UI.hKind}, r)).sort(calc.sortDesc);
+  let summary;
+  if(isOil){ const s = calc.oilSummary(list);
+    summary = `<dl class="card summary num"><div class="full"><dt>Oil expense</dt><dd>${tk(s.spend)}</dd><div class="cap">${s.count} record${s.count===1?'':'s'}${s.count?` · avg ${tk(s.avgCost)} per record`:''}</div></div>
+      <div><dt>Top-ups</dt><dd>${s.topups}</dd></div><div><dt>Oil changes</dt><dd>${s.changes}</dd></div>
+      <div><dt>Quantity logged</dt><dd>${litres(s.totalLitres,1)}</dd></div><div><dt>Top-ups / changes</dt><dd>${litres(s.topupLitres,1)} <span style="color:var(--muted);font-weight:500">/</span> ${litres(s.changeLitres,1)}</dd></div></dl>`;
+  } else { const s = calc.fuelSummary(list);
+    summary = `<dl class="card summary num"><div class="full"><dt>Fuel expense</dt><dd>${tk(s.spend)}</dd><div class="cap">${s.count} refueling${s.count===1?'':'s'}</div></div>
+      <div><dt>Litres purchased</dt><dd>${litres(s.litres)}</dd></div><div><dt>Avg per refueling</dt><dd>${s.count?litres(s.avgLitres):'—'}</dd></div>
+      <div class="wide"><dt>Avg effective price / L</dt><dd>${s.avgEffective!=null?tkL(s.avgEffective):'—'}</dd></div></dl>`;
+  }
+  const groups = []; list.forEach(r => { const k = r.dateTime.slice(0,7); let g = groups[groups.length-1]; if(!g || g.k !== k){ g = {k, items:[]}; groups.push(g); } g.items.push(r); });
+  const body = groups.length ? groups.map(g => { const l = monthLabel(g.k); return `<section class="group" style="margin-top:20px"><div class="ghead"><span class="tag ${isOil?'tag--oil':'tag--fuel'}">${l.name} ${l.y} <span class="count">(${g.items.length})</span></span></div><ul class="stack">${g.items.map(r => rowHTML(r,{meta:true})).join('')}</ul></section>`; }).join('')
+    : `<div class="group"><button class="slot" data-add="${UI.hKind}">${(UI.range.preset!=='all' || UI.oilType!=='all') ? 'No records match these filters' : isOil ? 'No engine oil logged yet' : 'No refuelings logged yet'}<span class="plus">${ic('plus')}</span></button></div>`;
+  return `<header class="topbar"><span class="pill-btn brand">MotoLog</span><div class="topbar__r"><button class="circle-btn" data-add="${UI.hKind}" aria-label="${isOil?'Log engine oil':'Log refueling'}">${ic('plus')}</button></div></header>
+    <div class="hero"><h1>History</h1><p>Every record, newest first</p></div>
+    <div class="seg seg--lg" role="group" aria-label="Record type"><button data-hkind="fuel" aria-pressed="${!isOil}">Fuel</button><button data-hkind="oil" aria-pressed="${isOil}">Engine oil</button></div>
+    <div class="filters">
+      ${isOil ? [['all','All oil'],['topup','Top-ups'],['change','Oil changes']].map(([k,l]) => `<button class="chipf" data-otype="${k}" aria-pressed="${UI.oilType===k}">${l}</button>`).join('') : ''}
+      <button class="chipf" id="rangeBtn" aria-haspopup="dialog" aria-pressed="${UI.range.preset!=='all'}">${ic('cal')}${rangeLabel()}${ic('down')}</button>
+    </div>
+    <div class="enter">${summary}${body}</div>`;
+}
+
+function settingsHTML(){
+  const s = Store.settings; const nF = Store.fuel.length, nO = Store.oil.length;
+  const storage = Store.mode === 'cloud' ? ['Saved with this app', 'Records sync wherever you open MotoLog'] : Store.persisted ? ['Saved on this device', Store.readonlyCloud ? 'You can view the shared log but not change it' : 'Records stay in this browser only'] : ['Not saved', 'This browser blocks storage, so records reset on reload'];
+  return `<header class="topbar"><span class="pill-btn brand">MotoLog</span><span></span></header>
+    <div class="hero"><h1>Settings</h1><p>Preferences and your data</p></div>
+    <h2 class="sect">Fuel</h2>
+    <div class="list"><label class="li" for="setBase">${ic('tag','ic')}<span class="t"><b>Base price for new entries</b><span>Prefills the form. Saved records keep their own price.</span></span>
+      <span class="r"><span class="vpill" style="padding-right:0"><span class="unit" style="padding:0">৳</span><input class="n num" id="setBase" inputmode="decimal" value="${esc(s.defaultBasePrice)}" style="width:64px" aria-label="Base price per litre in taka"><span class="unit">/L</span></span></span></label></div>
+    <h2 class="sect">Engine oil</h2>
+    <div class="list"><div class="li">${ic('drop','ic')}<span class="t"><b>Default quantity unit</b><span>You can switch per entry</span></span>
+      <span class="r"><span class="unitseg" style="background:var(--surface-2)">${['mL','L'].map(u => `<button data-oilunit="${u}" aria-pressed="${s.oilUnit===u}">${u}</button>`).join('')}</span></span></div></div>
+    <h2 class="sect">Display</h2>
+    <div class="list"><div class="li">${ic('moon','ic')}<span class="t"><b>Appearance</b></span>
+      <span class="r"><span class="seg">${['system','light','dark'].map(t => `<button data-theme-set="${t}" aria-pressed="${(prefs.theme||'system')===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</span></span></div></div>
+    <h2 class="sect">Data</h2>
+    <div class="list">
+      <div class="li">${ic('db','ic')}<span class="t"><b>${storage[0]}</b><span>${storage[1]}</span></span><span class="r num">${nF} fuel · ${nO} oil</span></div>
+      <button class="li" id="copyJson">${ic('copy','ic')}<span class="t"><b>Copy all records as JSON</b><span>For backup or a spreadsheet</span></span><span class="r">${ic('right')}</span></button>
+      ${Store.hasSamples ? `<button class="li" id="clearSamples">${ic('spark','ic')}<span class="t"><b>Remove example records</b><span>Keeps everything you logged yourself</span></span><span class="r">${ic('right')}</span></button>` : ''}
+      <button class="li li--danger" id="deleteAll">${ic('trash','ic')}<span class="t"><b>Delete all records</b><span>Fuel and engine oil. This can’t be undone.</span></span><span class="r">${ic('right')}</span></button>
+    </div>
+    <div class="foot"><h3>A calm log for every ride</h3><p>Fuel and engine oil, kept precise and simple.</p><small>MotoLog · Fuel &amp; Oil Tracker · v2.0</small></div>`;
+}
+
+/* ───────── app render + routing ───────── */
+const App = {
+  lastTab:null, lastMonth:null,
+  render(animate){
+    const root = $('#app');
+    if(Store.mode === 'loading'){ root.innerHTML = `<header class="topbar"><span class="pill-btn brand">MotoLog</span><span class="circle-btn" aria-hidden="true">${ic('plus')}</span></header><div class="hero"><h1>${monthLabel(UI.month).name}</h1><p>Loading your log…</p></div><div class="stack"><div class="skel" style="height:190px"></div><div class="skel"></div><div class="skel"></div></div>`; return; }
+    const tabChanged = this.lastTab !== UI.tab, monthChanged = this.lastMonth !== UI.month;
+    if(!tabChanged && UI.tab === 'settings' && document.activeElement && document.activeElement.id === 'setBase') return;
+    const keepScroll = !tabChanged ? window.scrollY : 0;
+    root.innerHTML = UI.tab === 'overview' ? overviewHTML() : UI.tab === 'history' ? historyHTML() : settingsHTML();
+    const enter = $('.enter', root); if(enter && !(animate || tabChanged)) enter.classList.remove('enter');
+    if(!tabChanged) window.scrollTo(0, keepScroll); else window.scrollTo(0,0);
+    if(UI.tab === 'overview'){
+      const strip = $('#mstrip'); const sel = $('.mchip[aria-pressed="true"]', strip); if(strip && sel && (tabChanged || animate)) strip.scrollLeft = sel.offsetLeft - strip.clientWidth/2 + sel.clientWidth/2;
+      if(monthChanged && !animate) countUp($('.big[data-count]'));
+      if(!(animate || tabChanged || monthChanged)) $$('.draw', root).forEach(e => e.classList.remove('draw'));
+    }
+    $$('#nav button').forEach((b,i) => { const on = b.dataset.tab === UI.tab; if(on){ b.setAttribute('aria-current','page'); $('#navInd').style.transform = `translateX(${i*100}%)`; } else b.removeAttribute('aria-current'); });
+    this.lastTab = UI.tab; this.lastMonth = UI.month;
+  },
+  go(tab){ UI.tab = tab; this.render(true); }
+};
+function countUp(el){
+  if(!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const target = Number(el.dataset.count)||0, t0 = performance.now(), dur = 520;
+  const step = t => { const k = Math.min(1,(t-t0)/dur), e = 1 - Math.pow(1-k,3); el.textContent = tk(Math.round(target*e)); if(k < 1) requestAnimationFrame(step); else el.textContent = tk(target); };
+  requestAnimationFrame(step);
+}
+let toastTimer;
+function toast(msg){ const t = $('#toast'); t.innerHTML = ic('check') + esc(msg); t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2600); }
+
+/* ───────── layers ───────── */
+const layers = [];
+function openLayer(html, {kind='sheet', blur=false, onMount, label='Dialog'}={}){
+  const el = document.createElement('div'); el.className = 'layer' + (blur ? ' blur' : '');
+  el.innerHTML = `<div class="scrim" data-dismiss></div>${kind==='sheet' ? `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}">${html}</div>` : `<div class="asheet" role="dialog" aria-modal="true" aria-label="${esc(label)}">${html}</div>`}`;
+  document.body.appendChild(el); const prevFocus = document.activeElement;
+  const layer = { el, close(){ closeLayer(layer); }, prevFocus };
+  layers.push(layer); document.body.style.overflow = 'hidden';
+  el.addEventListener('click', e => { if(e.target.closest('[data-dismiss]')) layer.close(); });
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
+  if(onMount) onMount(el, layer);
+  setTimeout(() => { const f = $('[autofocus]', el) || $('button, input, textarea', $('.sheet, .asheet', el)); if(f && !el.contains(document.activeElement)) try{ f.focus({preventScroll:true}); }catch(e){} }, 60);
+  return layer;
+}
+function closeLayer(layer){
+  const i = layers.indexOf(layer); if(i < 0) return; layers.splice(i,1);
+  layer.el.classList.remove('on'); setTimeout(() => layer.el.remove(), 460);
+  if(!layers.length) document.body.style.overflow = '';
+  if(layer.prevFocus && document.contains(layer.prevFocus)) try{ layer.prevFocus.focus({preventScroll:true}); }catch(e){}
+}
+function closeAll(){ layers.slice().forEach(l => closeLayer(l)); }
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && layers.length) layers[layers.length-1].close(); });
+
+function confirmSheet({title, msg, action, onConfirm}){
+  openLayer(`<div class="amenu"><div class="msg"><b>${esc(title)}</b>${esc(msg)}</div>
+    <button class="aitem aitem--danger" data-ok>${ic('trash')}<span class="t"><b>${esc(action)}</b></span></button></div>
+    <button class="acancel" data-dismiss>Cancel</button>`, { kind:'action', blur:true, label:title, onMount(el, layer){
+      $('[data-ok]', el).addEventListener('click', async () => { layer.close(); await onConfirm(); });
+    }});
+}
+
+function openAddChoice(){
+  openLayer(`<div class="amenu">
+    <button class="aitem" data-choose="fuel"><span class="tile tile--fuel">${ic('fuel')}</span><span class="t"><b>Log Refueling</b><span>Litres, amount paid, base price</span></span></button>
+    <button class="aitem" data-choose="oil"><span class="tile tile--topup">${ic('oil')}</span><span class="t"><b>Log Engine Oil</b><span>A top-up or a full oil change</span></span></button>
+  </div><button class="acancel" data-dismiss>Cancel</button>`, { kind:'action', blur:true, label:'Add a record', onMount(el, layer){
+    $$('[data-choose]', el).forEach(b => b.addEventListener('click', () => { layer.close(); setTimeout(() => openForm(b.dataset.choose), 120); }));
+  }});
+}
+
+/* ───────── forms ───────── */
+function sheetHead(title, saveLabel){ return `<div class="sheet__head"><button class="circle-btn" data-dismiss aria-label="Close">${ic('close')}</button><h2>${esc(title)}</h2><button class="save" id="saveBtn" aria-label="${esc(saveLabel)}" disabled>${ic('check')}</button></div>`; }
+
+function openForm(kind, existing){
+  if(kind === 'fuel') return openFuelForm(existing);
+  return openOilForm(existing);
+}
+
+function openFuelForm(rec){
+  const n = nowParts(); const isEdit = !!rec;
+  const latest = Store.fuel.slice().sort(calc.sortDesc)[0];
+  const def = Number(Store.settings.defaultBasePrice) || '';
+  const v = rec ? { date:rec.dateTime.slice(0,10), time:rec.dateTime.slice(11,16), litres:rec.litres, amount:rec.amount, base:rec.basePrice, notes:rec.notes||'' } : { date:n.date, time:n.time, litres:'', amount:'', base:def, notes:'' };
+  const html = `${sheetHead(isEdit?'Edit refueling':'Log Refueling', isEdit?'Save changes':'Save refueling')}
+    <form class="sheet__body" id="fuelForm" novalidate>
+      <div class="card namecard"><div><div class="serif">Refueling</div><div class="sub">Fuel purchase at the pump</div></div><span class="tile tile--fuel tile--lg">${ic('fuel')}</span></div>
+      <div class="fgroup">
+        <div class="frow"><label for="fDate">Date</label><span class="vpill">${ic('cal')}<input type="date" id="fDate" value="${v.date}" max="${n.date}" required></span></div>
+        <div class="frow"><label for="fTime">Time</label><span class="vpill">${ic('clock')}<input type="time" id="fTime" value="${v.time}" required></span></div>
+      </div>
+      <div class="fgroup">
+        <div class="frow"><label for="fLitres">Litres purchased</label><span class="vpill"><input class="n num" id="fLitres" inputmode="decimal" placeholder="0.00" value="${esc(v.litres)}" autofocus><span class="unit">L</span></span></div>
+        <div class="frow"><label for="fAmount">Total amount paid</label><span class="vpill"><span class="unit" style="padding:0 0 0 2px">৳</span><input class="n num" id="fAmount" inputmode="decimal" placeholder="0" value="${esc(v.amount)}"></span></div>
+        <div class="frow"><label for="fBase">Base price per litre</label><span class="vpill"><span class="unit" style="padding:0 0 0 2px">৳</span><input class="n num" id="fBase" inputmode="decimal" placeholder="0.00" value="${esc(v.base)}" style="width:72px"><span class="unit">/L</span></span></div>
+      </div>
+      ${!isEdit && latest && Number(latest.basePrice) !== Number(def) ? `<div class="quickrow"><button type="button" class="quick" id="useLast">Use last recorded ${tk(latest.basePrice,2)}/L</button></div>` : ''}
+      <p class="ferr" id="fErr" hidden></p>
+      <div class="card calc" id="fCalc"></div>
+      <div class="fgroup"><label class="sr" for="fNotes">Notes</label><textarea class="notes" id="fNotes" placeholder="Notes (optional) — station, ride, anything useful">${esc(v.notes)}</textarea></div>
+    </form>`;
+  openLayer(html, { label: isEdit?'Edit refueling':'Log Refueling', onMount(el, layer){
+    const f = id => $('#'+id, el); const save = f('saveBtn');
+    const read = () => ({ date:f('fDate').value, time:f('fTime').value, litres:parseNum(f('fLitres').value), amount:parseNum(f('fAmount').value), base:parseNum(f('fBase').value), notes:f('fNotes').value.trim() });
+    const touched = new Set();
+    const validate = () => {
+      const x = read(); const errs = {};
+      if(!x.date) errs.fDate = 'Choose a date.'; if(!x.time) errs.fTime = 'Choose a time.';
+      if(!(x.litres > 0)) errs.fLitres = 'Enter the litres purchased.';
+      if(!(x.amount > 0)) errs.fAmount = 'Enter the amount paid in taka.';
+      if(!(x.base > 0)) errs.fBase = 'Enter the base price per litre.';
+      if(x.date && x.time && `${x.date}T${x.time}` > `${nowParts().date}T23:59`) errs.fDate = 'The date can’t be in the future.';
+      ['fDate','fTime','fLitres','fAmount','fBase'].forEach(id => f(id).closest('.vpill').classList.toggle('bad', !!errs[id] && touched.has(id)));
+      const shown = Object.keys(errs).filter(k => touched.has(k)).map(k => errs[k]);
+      const err = f('fErr'); err.hidden = !shown.length; err.textContent = shown[0] || '';
+      const eff = x.litres > 0 && x.amount > 0 ? x.amount / x.litres : null;
+      const c = f('fCalc'); c.classList.toggle('calc--empty', eff == null);
+      c.innerHTML = `<div><div class="l">Effective price</div><div class="cap">Amount paid ÷ litres${eff!=null && x.base>0 ? `. ${Math.abs(eff-x.base) < 0.005 ? 'Matches the base price.' : `${tk(Math.abs(eff-x.base),2)}/L ${eff>x.base?'above':'below'} base.`}` : ''}</div></div><div class="v num">${eff!=null ? tkL(eff) : '৳—/L'}</div>`;
+      save.disabled = Object.keys(errs).length > 0; return { x, ok: !Object.keys(errs).length };
+    };
+    $$('input,textarea', el).forEach(i => { i.addEventListener('input', () => { touched.add(i.id); validate(); }); i.addEventListener('blur', () => { if(i.value) touched.add(i.id); validate(); }); });
+    const ul = f('useLast'); if(ul) ul.addEventListener('click', () => { f('fBase').value = latest.basePrice; touched.add('fBase'); validate(); });
+    validate();
+    const submit = async e => { if(e) e.preventDefault(); ['fDate','fTime','fLitres','fAmount','fBase'].forEach(i=>touched.add(i)); const {x, ok} = validate(); if(!ok) return;
+      const stamp = new Date().toISOString();
+      const out = { id: rec ? rec.id : uid('fuel'), dateTime:`${x.date}T${x.time}`, litres:x.litres, amount:x.amount, basePrice:x.base, notes:x.notes, createdAt: rec ? rec.createdAt : stamp, updatedAt:stamp };
+      if(rec && rec.sample) out.sample = true;
+      save.disabled = true; const done = await Store.put('fuel', out);
+      if(done){ closeAll(); toast(isEdit ? 'Refueling updated' : 'Refueling saved'); } else save.disabled = false;
+    };
+    f('fuelForm').addEventListener('submit', submit); save.addEventListener('click', submit);
+  }});
+}
+
+function openOilForm(rec){
+  const n = nowParts(); const isEdit = !!rec;
+  const v = rec ? { type:rec.type, date:rec.dateTime.slice(0,10), time:rec.dateTime.slice(11,16), qty:rec.quantity, unit:rec.unit, amount:rec.amount, brand:rec.brand||'', grade:rec.grade||'', odo:rec.odometerKm!=null?rec.odometerKm:'', notes:rec.notes||'' }
+    : { type:'topup', date:n.date, time:n.time, qty:'', unit:Store.settings.oilUnit||'mL', amount:'', brand:'', grade:'', odo:'', notes:'' };
+  const brands = Array.from(new Set([...Store.oil.slice().sort(calc.sortDesc).map(r=>r.brand).filter(Boolean), 'ELF','Motul','Liqui Moly','Castrol','Shell Advance']));
+  const grades = Array.from(new Set([...Store.oil.map(r=>r.grade).filter(Boolean), '10W-30','10W-40','10W-50','20W-50']));
+  const hasOptional = !!(v.brand || v.grade || v.odo !== '' || v.notes);
+  const html = `${sheetHead(isEdit?'Edit engine oil':'Log Engine Oil', isEdit?'Save changes':'Save engine oil record')}
+    <form class="sheet__body" id="oilForm" novalidate>
+      <div class="card namecard"><div><div class="serif" id="oName">Oil top-up</div><div class="sub" id="oSub">Oil added to the engine</div></div><span class="tile tile--lg" id="oTile"></span></div>
+      <div class="types" role="radiogroup" aria-label="Activity type">
+        <button type="button" class="type type--topup" role="radio" data-type="topup" aria-checked="${v.type==='topup'}"><span class="tile tile--topup">${ic('drop')}</span><b>Oil Top-Up</b><span>Added oil between changes</span></button>
+        <button type="button" class="type type--change" role="radio" data-type="change" aria-checked="${v.type==='change'}"><span class="tile tile--change">${ic('change')}</span><b>Oil Change</b><span>Drained and refilled</span></button>
+      </div>
+      <div class="fgroup">
+        <div class="frow"><label for="oDate">Date</label><span class="vpill">${ic('cal')}<input type="date" id="oDate" value="${v.date}" max="${n.date}" required></span></div>
+        <div class="frow"><label for="oTime">Time</label><span class="vpill">${ic('clock')}<input type="time" id="oTime" value="${v.time}" required></span></div>
+      </div>
+      <div class="fgroup">
+        <div class="frow"><label for="oQty">Quantity added</label><span class="vpill" style="padding-right:3px"><input class="n num" id="oQty" inputmode="decimal" placeholder="0" value="${esc(v.qty)}" style="width:68px"><span class="unitseg" role="group" aria-label="Unit">${['mL','L'].map(u => `<button type="button" data-unit="${u}" aria-pressed="${v.unit===u}">${u}</button>`).join('')}</span></span></div>
+        <div class="frow"><label for="oAmount">Total amount paid</label><span class="vpill"><span class="unit" style="padding:0 0 0 2px">৳</span><input class="n num" id="oAmount" inputmode="decimal" placeholder="0" value="${esc(v.amount)}"></span></div>
+      </div>
+      <p class="ferr" id="oErr" hidden></p>
+      <div class="card calc" id="oCalc"></div>
+      <div class="fgroup">
+        <button type="button" class="more" id="moreBtn" aria-expanded="${hasOptional}" aria-controls="moreBox"><span>Details <span class="opt">optional · brand, grade, odometer, notes</span></span>${ic('down')}</button>
+        <div id="moreBox" ${hasOptional?'':'hidden'} style="border-top:1px solid var(--line)">
+          <div class="frow"><label for="oBrand">Brand / product</label><span class="vpill"><input class="t" id="oBrand" list="brandList" placeholder="e.g. Motul" value="${esc(v.brand)}" autocomplete="off"></span></div>
+          <div class="frow"><label for="oGrade">Oil grade</label><span class="vpill"><input class="t" id="oGrade" list="gradeList" placeholder="e.g. 10W-40" value="${esc(v.grade)}" style="width:110px" autocomplete="off"></span></div>
+          <div class="frow"><label for="oOdo">Odometer</label><span class="vpill">${ic('gauge')}<input class="n num" id="oOdo" inputmode="numeric" placeholder="—" value="${esc(v.odo)}" style="width:80px"><span class="unit">km</span></span></div>
+          <div style="border-top:1px solid var(--line)"><label class="sr" for="oNotes">Notes</label><textarea class="notes" id="oNotes" placeholder="Notes — workshop, reason, anything useful">${esc(v.notes)}</textarea></div>
+        </div>
+      </div>
+      <datalist id="brandList">${brands.map(b => `<option value="${esc(b)}"></option>`).join('')}</datalist>
+      <datalist id="gradeList">${grades.map(g => `<option value="${esc(g)}"></option>`).join('')}</datalist>
+    </form>`;
+  openLayer(html, { label: isEdit?'Edit engine oil':'Log Engine Oil', onMount(el){
+    const f = id => $('#'+id, el); const save = f('saveBtn'); let type = v.type, unit = v.unit; const touched = new Set();
+    const paintType = () => {
+      $$('[data-type]', el).forEach(b => b.setAttribute('aria-checked', String(b.dataset.type === type)));
+      f('oName').textContent = type === 'change' ? 'Oil change' : 'Oil top-up';
+      f('oSub').textContent = type === 'change' ? 'A maintenance event — enter what was actually used' : 'Oil added to the engine';
+      f('oTile').className = `tile tile--lg tile--${type}`; f('oTile').innerHTML = ic(type === 'change' ? 'change' : 'drop');
+    };
+    const read = () => { const odoRaw = f('oOdo').value.trim(); return { date:f('oDate').value, time:f('oTime').value, qty:parseNum(f('oQty').value), amount:parseNum(f('oAmount').value), brand:f('oBrand').value.trim(), grade:f('oGrade').value.trim().toUpperCase(), odoRaw, odo: odoRaw === '' ? null : parseNum(odoRaw.replace(/[\s_]/g,'')), notes:f('oNotes').value.trim() }; };
+    const validate = () => {
+      const x = read(); const errs = {};
+      if(!x.date) errs.oDate = 'Choose a date.'; if(!x.time) errs.oTime = 'Choose a time.';
+      if(!(x.qty > 0)) errs.oQty = 'Enter the quantity added.';
+      else if(unit === 'mL' && x.qty > 5000) errs.oQty = 'That’s over 5 L. Did you mean litres?';
+      else if(unit === 'L' && x.qty > 10) errs.oQty = 'That’s over 10 L. Did you mean millilitres?';
+      if(!(x.amount > 0)) errs.oAmount = 'Enter the amount paid in taka.';
+      if(x.odoRaw !== '' && !(x.odo >= 0 && Number.isInteger(x.odo))) errs.oOdo = 'Odometer should be whole kilometres.';
+      if(x.date && x.date > nowParts().date) errs.oDate = 'The date can’t be in the future.';
+      ['oDate','oTime','oQty','oAmount','oOdo'].forEach(id => f(id).closest('.vpill').classList.toggle('bad', !!errs[id] && touched.has(id)));
+      const shown = Object.keys(errs).filter(k => touched.has(k)).map(k => errs[k]);
+      f('oErr').hidden = !shown.length; f('oErr').textContent = shown[0] || '';
+      const L = x.qty > 0 ? calc.oilToLitres(x.qty, unit) : 0; const eff = L > 0 && x.amount > 0 ? x.amount / L : null;
+      const c = f('oCalc'); c.classList.toggle('calc--empty', eff == null);
+      c.innerHTML = `<div><div class="l">Calculated effective price</div><div class="cap">${eff!=null ? `${tk(x.amount)} ÷ ${trimL(L)}. Not necessarily the bottle’s retail price.` : 'Amount paid ÷ quantity in litres. Not necessarily the bottle’s retail price.'}</div></div><div class="v num">${eff!=null ? tk(eff, eff % 1 ? 2 : 0) + '/L' : '৳—/L'}</div>`;
+      save.disabled = Object.keys(errs).length > 0; return { x, ok:!Object.keys(errs).length, L };
+    };
+    $$('[data-type]', el).forEach(b => b.addEventListener('click', () => { type = b.dataset.type; paintType(); validate(); }));
+    $$('[data-type]', el).forEach(b => b.addEventListener('keydown', e => { if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ e.preventDefault(); type = type==='topup'?'change':'topup'; paintType(); validate(); $(`[data-type="${type}"]`, el).focus(); } }));
+    $$('[data-unit]', el).forEach(b => b.addEventListener('click', () => { unit = b.dataset.unit; $$('[data-unit]', el).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.unit === unit))); validate(); }));
+    f('moreBtn').addEventListener('click', () => { const open = f('moreBtn').getAttribute('aria-expanded') !== 'true'; f('moreBtn').setAttribute('aria-expanded', String(open)); f('moreBox').hidden = !open; if(open) setTimeout(()=>f('oBrand').focus({preventScroll:false}),30); });
+    $$('input,textarea', el).forEach(i => { i.addEventListener('input', () => { touched.add(i.id); validate(); }); i.addEventListener('blur', () => { if(i.value) touched.add(i.id); validate(); }); });
+    paintType(); validate();
+    if(!isEdit) setTimeout(() => { try{ f('oQty').focus({preventScroll:true}); }catch(e){} }, 80);
+    const submit = async e => { if(e) e.preventDefault(); ['oDate','oTime','oQty','oAmount','oOdo'].forEach(i=>touched.add(i)); const {x, ok, L} = validate(); if(!ok) return;
+      const stamp = new Date().toISOString();
+      const out = { id: rec ? rec.id : uid('oil'), type, dateTime:`${x.date}T${x.time}`, quantity:x.qty, unit, litres:L, amount:x.amount,
+        brand:x.brand || null, grade:x.grade || null, odometerKm:x.odo, notes:x.notes, createdAt: rec ? rec.createdAt : stamp, updatedAt:stamp };
+      if(rec && rec.sample) out.sample = true;
+      save.disabled = true; const done = await Store.put('oil', out);
+      if(done){ closeAll(); toast(isEdit ? 'Engine oil record updated' : (type === 'change' ? 'Oil change saved' : 'Oil top-up saved')); } else save.disabled = false;
+    };
+    f('oilForm').addEventListener('submit', submit); save.addEventListener('click', submit);
+  }});
+}
+
+/* ───────── detail ───────── */
+function openDetail(kind, id){
+  const rec = Store.find(kind, id); if(!rec) return;
+  const r = Object.assign({kind}, rec); const d = describe(r);
+  let rows;
+  if(kind === 'fuel'){ const eff = calc.fuelEffective(r);
+    rows = `<div class="frow"><span class="lbl">Litres purchased</span><span class="val num">${litres(r.litres)}</span></div>
+      <div class="frow"><span class="lbl">Total amount paid</span><span class="val num">${tk(r.amount)}</span></div>
+      <div class="frow"><span class="lbl">Base price / L</span><span class="val num">${tkL(r.basePrice)}<small>as recorded</small></span></div>
+      <div class="frow"><span class="lbl">Effective price / L</span><span class="val num">${tkL(eff)}<small>calculated · ${Math.abs(eff-r.basePrice)<0.005?'matches base':`${tk(Math.abs(eff-r.basePrice),2)} ${eff>r.basePrice?'above':'below'} base`}</small></span></div>`;
+  } else { const eff = calc.oilEffective(r);
+    rows = `<div class="frow"><span class="lbl">Activity type</span><span class="tag tag--sm tag--${r.type}">${ic(r.type==='change'?'change':'drop')}${r.type==='change'?'Oil change':'Top-up'}</span></div>
+      <div class="frow"><span class="lbl">Quantity</span><span class="val num">${oilQty(r)}${r.unit==='mL'?`<small>${trimL(r.litres)}</small>`:''}</span></div>
+      <div class="frow"><span class="lbl">Total amount paid</span><span class="val num">${tk(r.amount)}</span></div>
+      <div class="frow"><span class="lbl">Effective price / L</span><span class="val num">${eff!=null ? tk(eff, eff%1?2:0)+'/L' : '—'}<small>calculated from this entry</small></span></div>
+      <div class="frow"><span class="lbl">Brand / product</span><span class="val">${r.brand ? esc(r.brand) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>
+      <div class="frow"><span class="lbl">Oil grade</span><span class="val">${r.grade ? esc(r.grade) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>
+      <div class="frow"><span class="lbl">Odometer</span><span class="val num">${r.odometerKm!=null ? km(r.odometerKm) : '<span style="color:var(--faint);font-weight:500">Not recorded</span>'}</span></div>`;
+  }
+  const html = `<div class="sheet__head"><button class="circle-btn" data-dismiss aria-label="Close">${ic('close')}</button><h2>${kind==='fuel'?'Refueling':'Engine oil'}</h2><span></span></div>
+    <div class="sheet__body">
+      <div class="card namecard"><div><div class="serif">${d.label}</div><div class="sub num">${fmtLong(r.dateTime)} · ${fmtTime(r.dateTime)}</div></div><span class="tile tile--lg tile--${d.tile}">${ic(d.icon)}</span></div>
+      <div class="fgroup detail-rows">${rows}</div>
+      ${r.notes ? `<div class="fgroup"><div class="notebox">${esc(r.notes)}</div></div>` : ''}
+      ${r.sample ? `<p class="note-line">This is an example record.</p>` : ''}
+      <div class="actions"><button class="trash" id="delBtn" aria-label="Delete record">${ic('trash')}</button><button class="cta" id="editBtn">${ic('edit')}Edit record</button></div>
+    </div>`;
+  openLayer(html, { label:`${d.label} details`, onMount(el, layer){
+    $('#editBtn', el).addEventListener('click', () => { layer.close(); setTimeout(() => openForm(kind, rec), 140); });
+    $('#delBtn', el).addEventListener('click', () => confirmSheet({ title:`Delete this ${d.label.toLowerCase()}?`, msg:`${fmtLong(r.dateTime)} · ${d.sub}. Totals update straight away.`, action:'Delete record',
+      onConfirm: async () => { const ok = await Store.remove(kind, id); if(ok){ closeAll(); toast('Record deleted'); } } }));
+  }});
+}
+
+/* ───────── date range ───────── */
+function openRange(){
+  const opts = [['all','All time'],['month','This month'],['3m','Last 3 months'],['year','This year'],['custom','Custom range']];
+  const r = UI.range;
+  openLayer(`<div class="amenu"><div class="msg"><b>Date range</b>Filter ${UI.hKind==='oil'?'engine oil':'fuel'} history and its summary.</div>
+    ${opts.map(([k,l]) => `<button class="aitem" data-preset="${k}">${ic(k==='custom'?'cal':'clock')}<span class="t"><b>${l}</b></span>${r.preset===k?ic('check','chk'):''}</button>`).join('')}
+    <div class="range-custom" id="rc" ${r.preset==='custom'?'':'hidden'}>
+      <div class="frow"><label for="rFrom">From</label><span class="vpill">${ic('cal')}<input type="date" id="rFrom" value="${r.from||''}"></span></div>
+      <div class="frow"><label for="rTo">To</label><span class="vpill">${ic('cal')}<input type="date" id="rTo" value="${r.to||''}"></span></div>
+      <p class="ferr" id="rErr" hidden></p>
+      <button class="cta cta--wide" id="rApply">Apply range</button>
+    </div></div><button class="acancel" data-dismiss>Cancel</button>`, { kind:'action', blur:true, label:'Date range', onMount(el, layer){
+      $$('[data-preset]', el).forEach(b => b.addEventListener('click', () => {
+        if(b.dataset.preset === 'custom'){ $('#rc', el).hidden = false; $('#rFrom', el).focus(); return; }
+        UI.range = { preset:b.dataset.preset, from:null, to:null }; layer.close(); App.render(true);
+      }));
+      $('#rApply', el).addEventListener('click', () => { const from = $('#rFrom', el).value || null, to = $('#rTo', el).value || null;
+        if(from && to && from > to){ const e = $('#rErr', el); e.hidden = false; e.textContent = 'The start date is after the end date.'; return; }
+        UI.range = from || to ? { preset:'custom', from, to } : { preset:'all', from:null, to:null }; layer.close(); App.render(true); });
+  }});
+}
+
+/* ───────── events ───────── */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button, [data-open]'); if(!t || t.closest('.layer')) return;
+  if(t.closest('#nav')){ const tab = t.dataset.tab; if(tab && tab !== UI.tab) App.go(tab); return; }
+  if(t.id === 'addBtn') return openAddChoice();
+  if(t.dataset.add !== undefined){ return t.dataset.add ? openForm(t.dataset.add) : openAddChoice(); }
+  if(t.dataset.open){ const [k, id] = t.dataset.open.split(':'); return openDetail(k, id); }
+  if(t.dataset.month){ if(UI.month !== t.dataset.month){ UI.month = t.dataset.month; App.render(false); } return; }
+  if(t.dataset.act){ UI.actFilter = t.dataset.act; savePrefs(); App.render(false); return; }
+  if(t.dataset.gotoHistory){ UI.hKind = t.dataset.gotoHistory; UI.oilType = 'all'; savePrefs(); App.go('history'); return; }
+  if(t.dataset.hkind){ UI.hKind = t.dataset.hkind; savePrefs(); App.render(true); return; }
+  if(t.dataset.otype){ UI.oilType = t.dataset.otype; App.render(false); return; }
+  if(t.id === 'rangeBtn') return openRange();
+  if(t.dataset.oilunit){ await Store.saveSettings({ oilUnit:t.dataset.oilunit }); return; }
+  if(t.dataset.themeSet){ applyTheme(t.dataset.themeSet); App.render(false); return; }
+  if(t.id === 'copyJson'){
+    const data = JSON.stringify({ exportedAt:new Date().toISOString(), fuel:Store.fuel, engineOil:Store.oil, settings:Store.settings }, null, 2);
+    try { await navigator.clipboard.writeText(data); toast('Records copied as JSON'); }
+    catch(err){ openLayer(`<div class="sheet__head"><button class="circle-btn" data-dismiss aria-label="Close">${ic('close')}</button><h2>Your records</h2><span></span></div><div class="sheet__body"><p class="note-line">Select all and copy.</p><div class="fgroup"><textarea class="notes num" id="jsonBox" style="min-height:300px;font-size:12px" readonly>${esc(data)}</textarea></div></div>`, { label:'Records JSON', onMount(el){ const b = $('#jsonBox', el); setTimeout(()=>{ b.focus(); b.select(); }, 80); } }); }
+    return;
+  }
+  if(t.id === 'clearSamples') return confirmSheet({ title:'Remove example records?', msg:'Records you logged yourself stay.', action:'Remove examples', onConfirm: async () => { if(await Store.removeWhere(r => r.sample)) toast('Example records removed'); } });
+  if(t.id === 'deleteAll') return confirmSheet({ title:'Delete all records?', msg:`${Store.fuel.length} fuel and ${Store.oil.length} engine oil records will be deleted. This can’t be undone.`, action:'Delete everything', onConfirm: async () => { if(await Store.removeWhere(() => true)) toast('All records deleted'); } });
+});
+let baseTimer;
+document.addEventListener('input', e => {
+  if(e.target.id === 'setBase'){ const v = parseNum(e.target.value); e.target.closest('.vpill').classList.toggle('bad', !(v > 0));
+    clearTimeout(baseTimer); if(v > 0) baseTimer = setTimeout(async () => { if(Number(Store.settings.defaultBasePrice) !== v){ await Store.saveSettings({ defaultBasePrice:v }); toast('Base price for new entries updated'); } }, 700); }
+});
+
+window.MotoLog = { calc, Store, UI, App, openForm, openDetail, exampleRecords };
+App.render(true);
+Store.boot();
+})();
+</script>
+
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+</body>
+</html>
